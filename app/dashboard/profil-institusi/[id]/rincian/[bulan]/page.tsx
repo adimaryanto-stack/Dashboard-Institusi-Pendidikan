@@ -47,10 +47,7 @@ export default function RincianPengeluaranPage() {
   }
 
   // ===== Calculated totals =====
-  const subTotal = items.reduce((s, item) => s + item.jumlah, 0);
-  const pajakPersen = rincianData.pajak_persen;
-  const pajakNominal = Math.round(subTotal * pajakPersen / 100);
-  const total = subTotal + pajakNominal;
+  const total = items.reduce((s, item) => s + item.jumlah, 0);
 
   const renderEditableCell = (row: RincianPengeluaranItem, field: 'harga_satuan' | 'qty') => {
     const value = row[field];
@@ -134,34 +131,36 @@ export default function RincianPengeluaranPage() {
               ))}
             </tbody>
             <tfoot>
-              {/* Sub Total */}
-              <tr>
+              {/* Subtotal */}
+              <tr className="border-t border-slate-200">
+                <td className="sheet-footer-cell" />
+                <td className="sheet-footer-cell text-left font-medium text-text-muted" colSpan={3}>
+                  Subtotal (Sebelum Pajak)
+                </td>
+                <td className="sheet-footer-cell text-right font-medium text-text-primary">
+                  {fmtRupiah(total)}
+                </td>
+              </tr>
+              {/* PPN */}
+              {rincianData.pajak_nominal > 0 && (
+                <tr className="border-t border-slate-100">
+                  <td className="sheet-footer-cell" />
+                  <td className="sheet-footer-cell text-left text-xs text-text-muted" colSpan={3}>
+                    PPN ({rincianData.pajak_persen}%)
+                  </td>
+                  <td className="sheet-footer-cell text-right text-xs text-text-muted">
+                    {fmtRupiah(rincianData.pajak_nominal)}
+                  </td>
+                </tr>
+              )}
+              {/* Total */}
+              <tr className="border-t border-slate-200 bg-slate-50/50">
                 <td className="sheet-footer-cell" />
                 <td className="sheet-footer-cell text-left font-bold text-text-primary" colSpan={3}>
-                  Sub Total
-                </td>
-                <td className="sheet-footer-cell text-right font-bold text-text-primary">
-                  {fmtRupiah(subTotal)}
-                </td>
-              </tr>
-              {/* Pajak */}
-              <tr>
-                <td className="sheet-cell border-b border-border" />
-                <td className="sheet-cell border-b border-border text-left text-text-secondary" colSpan={3}>
-                  Pajak {pajakPersen}%
-                </td>
-                <td className="sheet-cell border-b border-border text-right text-text-secondary">
-                  {fmtRupiah(pajakNominal)}
-                </td>
-              </tr>
-              {/* Total */}
-              <tr>
-                <td className="sheet-footer-cell" />
-                <td className="sheet-footer-cell text-left font-bold" colSpan={3}>
-                  Total
+                  Total Realisasi Belanja (Setelah Pajak)
                 </td>
                 <td className="sheet-footer-cell text-right font-bold text-emerald-600 text-base">
-                  {fmtRupiah(total)}
+                  {fmtRupiah(rincianData.total)}
                 </td>
               </tr>
             </tfoot>

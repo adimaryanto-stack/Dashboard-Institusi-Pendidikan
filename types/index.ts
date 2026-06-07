@@ -181,3 +181,19 @@ export interface AuditAnomaly {
   audit_how?: string;
 }
 
+export interface TransaksiGlobal {
+  id: string;
+  tanggal: string;
+  institusiId: string;
+  namaInstitusi: string;
+  jenjang: string;
+  kategori: 'Sarana Prasarana' | 'Gaji Honorer' | 'Operasional' | 'Buku & Perpus' | 'Kegiatan Siswa' | 'Lainnya';
+  item: string;
+  qty: number;
+  hargaSatuan: number;
+  nominal: number;
+  strukStatus: 'VALID' | 'DUPLIKAT' | 'ANOMALI_PAJAK' | 'STRUK_BURAM';
+  strukMessage: string;
+  invoiceNo: string;
+  vendorName: string;
+}

@@ -53,6 +53,14 @@ const SIMULATED_REPORTS: Record<string, {
     ],
     reasoning: 'Ditemukan selisih saldo bank sebesar Rp 12.000.000.000 yang ditarik tunai pada tanggal 05 April 2026, tetapi tidak diiringi dengan rincian nota belanja yang di-upload ke sistem.'
   },
+  'inst-sd-0': {
+    severity: 'MEDIUM',
+    isAnomalyDetected: true,
+    findings: [
+      { item: 'Indikasi Pengeluaran Fiktif ATK', issue: 'Pembelian alat tulis kantor dalam jumlah berlebihan yang melebihi kapasitas operasional normal sekolah dasar.', estimatedLoss: 35000000 }
+    ],
+    reasoning: 'Volume pembelian ATK yang dilaporkan dinilai melebihi kebutuhan riil sekolah dan tidak didukung bukti fisik di gudang.'
+  },
   'clean': {
     severity: 'CLEAN',
     isAnomalyDetected: false,
@@ -69,8 +77,8 @@ interface ChatMessage {
 }
 
 export default function AuditPage() {
-  const [anomalies, setAnomalies] = useState<AuditAnomaly[]>(mockAnomalies);
-  const [selectedInst, setSelectedInst] = useState('inst-universitas-0');
+  const [anomalies, setAnomalies] = useState<AuditAnomaly[]>(mockAnomalies.filter(a => a.institusi_id === 'inst-sd-0'));
+  const [selectedInst, setSelectedInst] = useState('inst-sd-0');
   const [scanStatus, setScanStatus] = useState<'IDLE' | 'SCANNING' | 'DONE'>('IDLE');
   const [scanProgress, setScanProgress] = useState(0);
   const [scanMessage, setScanMessage] = useState('');
@@ -166,16 +174,10 @@ export default function AuditPage() {
         if (reportKey !== 'clean' && !anomalies.some(a => a.institusi_id === reportKey)) {
           // add to table simulation
           const nameMap: Record<string, string> = {
-            'inst-universitas-0': 'Universitas Indonesia',
-            'inst-sma-0': 'SMAN 1 Jakarta',
-            'inst-smp-2': 'SMPN 1 Surabaya',
-            'inst-universitas-1': 'Institut Teknologi Bandung'
+            'inst-sd-0': 'SDN 01 Menteng'
           };
           const jenjangMap: Record<string, any> = {
-            'inst-universitas-0': 'UNIVERSITAS',
-            'inst-sma-0': 'SMA',
-            'inst-smp-2': 'SMP',
-            'inst-universitas-1': 'UNIVERSITAS'
+            'inst-sd-0': 'SD'
           };
 
           const newAnomaly: AuditAnomaly = {
@@ -491,11 +493,7 @@ export default function AuditPage() {
                     className="select-dropdown w-full"
                     disabled={scanStatus === 'SCANNING'}
                   >
-                    <option value="inst-universitas-0">Universitas Indonesia (High Risk - Markup)</option>
-                    <option value="inst-sma-0">SMAN 1 Jakarta (Medium Risk - Duplikasi)</option>
-                    <option value="inst-smp-2">SMPN 1 Surabaya (Low Risk - Pajak PPN)</option>
-                    <option value="inst-universitas-1">Institut Teknologi Bandung (High Risk - Saldo SPJ)</option>
-                    <option value="clean-ugm">Universitas Gadjah Mada (Clean - Patuh)</option>
+                    <option value="inst-sd-0">SDN 01 Menteng (Medium Risk - Fiktif)</option>
                   </select>
                 </div>
 

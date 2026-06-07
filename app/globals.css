@@ -405,6 +405,12 @@ body::before {
   box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15), 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
+.modal-content-wide {
+  max-width: 768px !important;
+  width: 95% !important;
+}
+
+
 /* Select Dropdown */
 .select-dropdown {
   background: rgba(255, 255, 255, 0.7);

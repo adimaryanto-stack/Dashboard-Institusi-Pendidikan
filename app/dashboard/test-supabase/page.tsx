@@ -5,7 +5,7 @@ import Header from '@/components/layout/Header';
 import { supabase } from '@/lib/supabase';
 import {
   Database, ShieldCheck, XCircle, AlertTriangle, RefreshCw, CheckCircle2,
-  Copy, Check, Play, TableProperties, Sparkles, HelpCircle, Terminal
+  Copy, Check, Play, TableProperties, Sparkles, HelpCircle, Terminal, Loader2
 } from 'lucide-react';
 
 interface ConnectionStatus {

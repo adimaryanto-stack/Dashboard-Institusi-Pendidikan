@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store';
 import {
   LayoutDashboard, DollarSign, MapPin, Building2,
   GraduationCap, Users, ChevronDown, ChevronRight,
-  Menu, X, Landmark, School, ShieldCheck
+  Menu, X, Landmark, School, ShieldCheck, CreditCard
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -56,7 +56,7 @@ export default function Sidebar() {
             </div>
             <div>
               <h1 className="text-sm font-bold text-text-primary leading-tight">Dashboard</h1>
-              <p className="text-xs text-text-muted">Auditor</p>
+              <p className="text-[10px] text-text-muted">Institusi Pendidikan</p>
             </div>
           </div>
         </div>
@@ -68,51 +68,15 @@ export default function Sidebar() {
             <span>Dashboard</span>
           </Link>
 
-          <Link href="/dashboard/apbn" className={`sidebar-item ${isActive('/dashboard/apbn') ? 'active' : ''}`}>
-            <DollarSign size={18} />
-            <span>APBN Pertahun</span>
-          </Link>
 
-          <Link href="/dashboard/provinsi" className={`sidebar-item ${isActive('/dashboard/provinsi') ? 'active' : ''}`}>
-            <MapPin size={18} />
-            <span>Provinsi</span>
-          </Link>
-
-          <Link href="/dashboard/kabupaten-kota" className={`sidebar-item ${isActive('/dashboard/kabupaten-kota') ? 'active' : ''}`}>
-            <Building2 size={18} />
-            <span>Kabupaten / Kota</span>
-          </Link>
-
-          {/* Jenjang Accordion */}
-          <div>
-            <button
-              onClick={() => setJenjangOpen(!jenjangOpen)}
-              className={`sidebar-item w-full ${isJenjangActive ? 'active' : ''}`}
-            >
-              <GraduationCap size={18} />
-              <span className="flex-1 text-left">Jenjang Pendidikan</span>
-              {jenjangOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            </button>
-            
-            <div className={`overflow-hidden transition-all duration-300 ${jenjangOpen ? 'max-h-60' : 'max-h-0'}`}>
-              <div className="ml-4 pl-4 border-l border-border/50 space-y-0.5 py-1">
-                {jenjangItems.map(item => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`sidebar-item text-sm py-1.5 ${isActive(item.href) ? 'active' : ''}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <Link href="/dashboard/profil-institusi" className={`sidebar-item ${pathname.includes('/profil-institusi') ? 'active' : ''}`}>
+          <Link href="/dashboard/profil-institusi/inst-sd-0" className={`sidebar-item ${pathname.includes('/profil-institusi') ? 'active' : ''}`}>
             <School size={18} />
             <span>Profil Institusi</span>
+          </Link>
+
+          <Link href="/dashboard/pengeluaran" className={`sidebar-item ${pathname.includes('/pengeluaran') ? 'active' : ''}`}>
+            <CreditCard size={18} />
+            <span>Pengeluaran</span>
           </Link>
 
           <Link href="/dashboard/audit" className={`sidebar-item ${pathname.includes('/audit') ? 'active' : ''}`}>
@@ -134,7 +98,7 @@ export default function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-text-primary truncate">Super Admin</p>
-              <p className="text-[10px] text-text-muted truncate">admin@auditor.go.id</p>
+              <p className="text-[10px] text-text-muted truncate">admin@institusi.go.id</p>
             </div>
           </div>
         </div>

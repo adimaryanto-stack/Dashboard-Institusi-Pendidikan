@@ -89,7 +89,7 @@ export default function UsersPage() {
 
   return (
     <div className="min-h-screen">
-      <Header title="User Manager" subtitle="Kelola pengguna dan hak akses sistem" />
+      <Header title="User Manager" subtitle="Kelola pengguna dan hak akses sistem" showYearSelector={false} showSearch={false} />
 
       <div className="p-6">
         {/* Toolbar */}
@@ -210,7 +210,7 @@ export default function UsersPage() {
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  placeholder="john@auditor.go.id"
+                  placeholder="john@institusi.go.id"
                   className="search-input w-full pl-3"
                 />
               </div>

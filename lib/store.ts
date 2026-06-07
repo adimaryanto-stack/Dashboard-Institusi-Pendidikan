@@ -1,6 +1,15 @@
-'use client';
-
 import { create } from 'zustand';
+import { TransaksiGlobal } from '@/types';
+import { INITIAL_TRANSACTIONS } from './data/transactions';
+
+export interface NotificationItem {
+  id: string;
+  message: string;
+  time: string;
+  unread: boolean;
+  type: 'info' | 'success' | 'warning';
+  link: string;
+}
 
 interface DbData {
   tahun_anggaran: any[];
@@ -30,6 +39,18 @@ interface AppState {
   setDbData: (data: DbData | null) => void;
   isLoadingDb: boolean;
   setIsLoadingDb: (loading: boolean) => void;
+
+  // Transaction states
+  transaksiList: TransaksiGlobal[];
+  addTransaksi: (t: TransaksiGlobal) => void;
+  setTransaksiList: (list: TransaksiGlobal[] | ((prev: TransaksiGlobal[]) => TransaksiGlobal[])) => void;
+
+  // Notification states
+  notifications: NotificationItem[];
+  addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'unread'>) => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  markAllAsUnread: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -46,4 +67,59 @@ export const useAppStore = create<AppState>((set) => ({
   setDbData: (data) => set({ dbData: data }),
   isLoadingDb: false,
   setIsLoadingDb: (loading) => set({ isLoadingDb: loading }),
+
+  // Transaction initial states
+  transaksiList: INITIAL_TRANSACTIONS,
+  addTransaksi: (t) => set((state) => ({ transaksiList: [t, ...state.transaksiList] })),
+  setTransaksiList: (list) => set((state) => ({
+    transaksiList: typeof list === 'function' ? list(state.transaksiList) : list
+  })),
+
+  // Notification initial states
+  notifications: [
+    {
+      id: 'n1',
+      message: 'Anggaran APBN 2026 Provinsi Aceh berhasil dialokasikan.',
+      time: '20 menit yang lalu',
+      unread: true,
+      type: 'success',
+      link: '/dashboard/provinsi/prov-1',
+    },
+    {
+      id: 'n2',
+      message: 'Realisasi Universitas Indonesia bulan Januari telah disinkronkan.',
+      time: '1 jam yang lalu',
+      unread: true,
+      type: 'info',
+      link: '/dashboard/profil-institusi/inst-universitas-0',
+    },
+    {
+      id: 'n3',
+      message: 'Peringatan: Penyerapan Kabupaten Ogan Komering Ulu di bawah 50%.',
+      time: '3 jam yang lalu',
+      unread: true,
+      type: 'warning',
+      link: '/dashboard/provinsi/prov-6/kabkota/kab-p-6-0',
+    },
+  ],
+  addNotification: (n) => set((state) => ({
+    notifications: [
+      {
+        ...n,
+        id: `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        time: 'Baru saja',
+        unread: true,
+      },
+      ...state.notifications
+    ]
+  })),
+  markAsRead: (id) => set((state) => ({
+    notifications: state.notifications.map(n => n.id === id ? { ...n, unread: false } : n)
+  })),
+  markAllAsRead: () => set((state) => ({
+    notifications: state.notifications.map(n => ({ ...n, unread: false }))
+  })),
+  markAllAsUnread: () => set((state) => ({
+    notifications: state.notifications.map(n => ({ ...n, unread: true }))
+  })),
 }));

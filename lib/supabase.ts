@@ -7,4 +7,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Warning: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing from environment variables.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: {
+    fetch: (url, options) => {
+      let targetUrl = '';
+      if (typeof url === 'string') {
+        targetUrl = url;
+      } else if (url && typeof url === 'object' && 'url' in url) {
+        targetUrl = (url as any).url;
+      } else {
+        targetUrl = url.toString();
+      }
+
+      const replacedUrl = targetUrl.replace('/rest/v1/', '/api/database/records/');
+      console.log(`[Supabase Interceptor] Routing ${targetUrl} -> ${replacedUrl}`);
+      return fetch(replacedUrl, options);
+    }
+  }
+});
+

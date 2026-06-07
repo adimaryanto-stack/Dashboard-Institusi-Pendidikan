@@ -9,6 +9,8 @@ import { Bell, Search, Menu, CheckCheck, Info, AlertTriangle, Sparkles } from 'l
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  showYearSelector?: boolean;
+  showSearch?: boolean;
 }
 
 interface NotificationItem {
@@ -20,52 +22,27 @@ interface NotificationItem {
   link: string;
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
-  const { activeTahun, setActiveTahun, toggleSidebar } = useAppStore();
+export default function Header({ title, subtitle, showYearSelector = true, showSearch = true }: HeaderProps) {
+  const { 
+    activeTahun, 
+    setActiveTahun, 
+    toggleSidebar,
+    notifications,
+    markAsRead,
+    markAllAsRead,
+    markAllAsUnread
+  } = useAppStore();
   const activeTahunList = tahunAnggaranData.filter(t => t.status !== 'DRAFT');
   const router = useRouter();
 
   // Notification States
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'n1',
-      message: 'Anggaran APBN 2026 Provinsi Aceh berhasil dialokasikan.',
-      time: '20 menit yang lalu',
-      unread: true,
-      type: 'success',
-      link: '/dashboard/provinsi/prov-1',
-    },
-    {
-      id: 'n2',
-      message: 'Realisasi Universitas Indonesia bulan Januari telah disinkronkan.',
-      time: '1 jam yang lalu',
-      unread: true,
-      type: 'info',
-      link: '/dashboard/profil-institusi/inst-universitas-0',
-    },
-    {
-      id: 'n3',
-      message: 'Peringatan: Penyerapan Kabupaten Ogan Komering Ulu di bawah 50%.',
-      time: '3 jam yang lalu',
-      unread: true,
-      type: 'warning',
-      link: '/dashboard/provinsi/prov-6/kabkota/kab-p-6-0',
-    },
-  ]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
+  const allRead = notifications.length > 0 && notifications.every(n => !n.unread);
 
   const toggleNotifications = () => {
     setShowNotifications(prev => !prev);
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
-
-  const toggleRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: !n.unread } : n));
   };
 
   return (
@@ -83,30 +60,34 @@ export default function Header({ title, subtitle }: HeaderProps) {
 
         <div className="flex items-center gap-3">
           {/* Year selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-text-muted">Tahun:</span>
-            <select
-              value={activeTahun}
-              onChange={(e) => setActiveTahun(Number(e.target.value))}
-              className="select-dropdown"
-            >
-              {activeTahunList.map(t => (
-                <option key={t.tahun} value={t.tahun}>
-                  {t.tahun} {t.status === 'ACTIVE' ? '✓' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+          {showYearSelector && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-muted">Tahun:</span>
+              <select
+                value={activeTahun}
+                onChange={(e) => setActiveTahun(Number(e.target.value))}
+                className="select-dropdown"
+              >
+                {activeTahunList.map(t => (
+                  <option key={t.tahun} value={t.tahun}>
+                    {t.tahun} {t.status === 'ACTIVE' ? '✓' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Search */}
-          <div className="relative hidden md:block">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Cari..."
-              className="search-input w-40"
-            />
-          </div>
+          {showSearch && (
+            <div className="relative hidden md:block">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                placeholder="Cari..."
+                className="search-input w-40"
+              />
+            </div>
+          )}
 
           {/* Notifications */}
           <div className="relative">
@@ -137,15 +118,21 @@ export default function Header({ title, subtitle }: HeaderProps) {
                       <Sparkles size={13} className="text-indigo-500" />
                       Notifikasi Terbaru
                     </span>
-                    {unreadCount > 0 && (
-                      <button 
-                        onClick={markAllAsRead} 
-                        className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:underline"
-                      >
-                        <CheckCheck size={12} />
-                        Semua Dibaca
-                      </button>
-                    )}
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-semibold text-indigo-600 hover:text-indigo-850 select-none">
+                      <input
+                        type="checkbox"
+                        checked={allRead}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            markAllAsRead();
+                          } else {
+                            markAllAsUnread();
+                          }
+                        }}
+                        className="h-3 w-3 rounded border-slate-350 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <span>Semua Dibaca</span>
+                    </label>
                   </div>
 
                   <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
@@ -159,7 +146,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                           key={n.id} 
                           onClick={() => {
                             // Mark as read
-                            setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, unread: false } : item));
+                            markAsRead(n.id);
                             // Close dropdown
                             setShowNotifications(false);
                             // Navigate

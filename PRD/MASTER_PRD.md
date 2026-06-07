@@ -634,10 +634,10 @@ DATABASE_URL="postgresql://user:password@localhost:5432/transparansi_anggaran"
 
 # Auth
 BETTER_AUTH_SECRET="your-secret-key-min-32-chars"
-BETTER_AUTH_URL="http://localhost:3000"
+BETTER_AUTH_URL="http://localhost:3002"
 
 # App
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3002"
 
 # Storage (production)
 AWS_ACCESS_KEY_ID=""
@@ -942,7 +942,7 @@ npm install
 cp .env.example .env.local   # isi DATABASE_URL, BETTER_AUTH_SECRET
 npm run db:migrate            # jalankan migrasi
 npm run db:seed               # seed 38 provinsi + default users
-npm run dev                   # http://localhost:3000
+npm run dev                   # http://localhost:3002
 ```
 
 ### Production

@@ -16,8 +16,11 @@ import {
   RincianPengeluaranItem,
   RincianPengeluaranBulanan,
   JenjangBreakdownProvinsi,
+  AuditAnomaly,
+  TransaksiGlobal,
 } from '@/types';
 import { useAppStore } from '@/lib/store';
+import { INITIAL_TRANSACTIONS } from './transactions';
 
 function getDb() {
   if (typeof window === 'undefined') return null;
@@ -378,9 +381,16 @@ const instPctValues = seededValues(30, 42, 95, 777);
 function generateInstitusi(names: string[], jenjang: Jenjang, baseNominal: number): InstitusiPendidikan[] {
   const kabkotaList = getKabkotaByProvinsi('p-12'); // Jawa Barat as default
   return names.map((nama, i) => {
-    const nominal = baseNominal * instNominalFactors[i % instNominalFactors.length];
+    let nominal = baseNominal * instNominalFactors[i % instNominalFactors.length];
     const pct = instPctValues[i % instPctValues.length];
-    const realisasi = Math.round(nominal * pct / 100);
+    let realisasi = Math.round(nominal * pct / 100);
+
+    // Override SDN 01 Menteng specifically (index 0 of SD names)
+    if (jenjang === 'SD' && i === 0) {
+      nominal = 2_707_071_598;
+      realisasi = 1_129_655_153;
+    }
+
     const kab = kabkotaList[i % kabkotaList.length];
     const kabName = kab?.kabupaten_kota?.nama_kabupaten_kota || 'Kabupaten Bogor';
     return {
@@ -398,11 +408,12 @@ function generateInstitusi(names: string[], jenjang: Jenjang, baseNominal: numbe
       nominal_alokasi: Math.round(nominal),
       realisasi_total: realisasi,
       selisih: Math.round(nominal) - realisasi,
-      persentase_penyerapan: Math.round(pct * 10) / 10,
+      persentase_penyerapan: nominal > 0 ? Math.round((realisasi / nominal) * 1000) / 10 : 0,
       updated_at: '2026-04-15',
     };
   });
 }
+
 
 export function getInstitusiByJenjang(jenjang: Jenjang): InstitusiPendidikan[] {
   const db = getDb();
@@ -426,14 +437,14 @@ export function updateUsersData(newData: User[]) {
 }
 
 export let usersData: User[] = [
-  { id: 'u1', username: 'superadmin', email: 'admin@auditor.go.id', role: 'SUPER_ADMIN', is_active: true, created_at: '2024-01-01' },
-  { id: 'u2', username: 'ahmad.fauzi', email: 'a.fauzi@auditor.go.id', role: 'ADMIN', is_active: true, created_at: '2024-02-15' },
+  { id: 'u1', username: 'superadmin', email: 'admin@institusi.go.id', role: 'SUPER_ADMIN', is_active: true, created_at: '2024-01-01' },
+  { id: 'u2', username: 'ahmad.fauzi', email: 'a.fauzi@institusi.go.id', role: 'ADMIN', is_active: true, created_at: '2024-02-15' },
   { id: 'u3', username: 'sari.dewi', email: 's.dewi@jabar.go.id', role: 'ADMIN_PROVINSI', provinsi_id: 'p-12', is_active: true, created_at: '2024-03-10' },
   { id: 'u4', username: 'budi.santoso', email: 'b.santoso@bandung.go.id', role: 'ADMIN_KABKOTA', kabupaten_kota_id: 'k-p-12-3', is_active: true, created_at: '2024-04-20' },
-  { id: 'u5', username: 'viewer.nasional', email: 'viewer@auditor.go.id', role: 'VIEWER', is_active: true, created_at: '2024-05-01' },
+  { id: 'u5', username: 'viewer.nasional', email: 'viewer@institusi.go.id', role: 'VIEWER', is_active: true, created_at: '2024-05-01' },
   { id: 'u6', username: 'auditor.bpk', email: 'audit@bpk.go.id', role: 'AUDITOR', is_active: true, created_at: '2024-06-01' },
   { id: 'u7', username: 'rina.wulan', email: 'r.wulan@jatim.go.id', role: 'ADMIN_PROVINSI', provinsi_id: 'p-15', is_active: true, created_at: '2024-07-01' },
-  { id: 'u8', username: 'doni.pratama', email: 'd.pratama@auditor.go.id', role: 'ADMIN', is_active: false, created_at: '2024-01-15' },
+  { id: 'u8', username: 'doni.pratama', email: 'd.pratama@institusi.go.id', role: 'ADMIN', is_active: false, created_at: '2024-01-15' },
 ];
 
 // === DASHBOARD SUMMARY ===
@@ -479,7 +490,7 @@ export function getDashboardSummary(tahun: number = 2026): DashboardSummary {
       total_nominal: totalNominal,
       total_realisasi: totalRealisasi,
       persentase_penyerapan: totalNominal > 0 ? (totalRealisasi / totalNominal) * 100 : 0,
-      per_jenjang,
+      per_jenjang: perJenjang,
       tren_tahunan: trenTahunan.sort((a, b) => a.tahun - b.tahun)
     };
   }
@@ -623,33 +634,88 @@ export function getProfilInstitusi(id: string, tahun: number = 2026): ProfilInst
   if (db) {
     const inst = db.institusi_pendidikan.find((i: any) => i.id === id);
     if (!inst) return null;
+
+    let nominal = Number(inst.nominal_alokasi);
+    let realisasi = Number(inst.realisasi_total);
+    let scaleNominal = 1.0;
+    let scaleRealisasi = 1.0;
+
+    if (id === 'inst-sd-0') {
+      const mentengData = MENTENG_YEAR_DATA[tahun];
+      if (mentengData) {
+        nominal = mentengData.alokasi;
+        realisasi = mentengData.realisasi;
+        scaleNominal = nominal / 2707071598;
+        scaleRealisasi = realisasi / 1129655153;
+      }
+    } else {
+      const targetTahun = tahunAnggaranData.find(t => t.tahun === tahun) || tahunAnggaranData[6];
+      const baseTahun = tahunAnggaranData[6];
+      const scale = targetTahun.total_anggaran > 0 ? targetTahun.total_anggaran / baseTahun.total_anggaran : 1.0;
+      nominal = Math.round(nominal * scale);
+      realisasi = Math.round(realisasi * scale);
+      scaleNominal = scale;
+      scaleRealisasi = scale;
+    }
+
     const sumberDana = db.sumber_dana_institusi.filter((sd: any) => sd.institusi_id === id);
     const pb = db.pengeluaran_bulanan_institusi
       .filter((p: any) => p.institusi_id === id)
       .sort((a: any, b: any) => a.nomor - b.nomor);
-    const totalNominalSumber = sumberDana.reduce((s: number, d: any) => s + Number(d.nominal), 0);
-    const totalRealisasiSumber = sumberDana.reduce((s: number, d: any) => s + Number(d.realisasi), 0);
+
+    const mappedSumberDana = sumberDana.map((sd: any) => {
+      const nom = Math.round(Number(sd.nominal) * scaleNominal);
+      const real = Math.round(Number(sd.realisasi) * scaleRealisasi);
+      return {
+        ...sd,
+        nominal: nom,
+        realisasi: real,
+        saldo_di_bank: nom - real
+      };
+    });
+
+    const scaledSchoolTx = getSchoolTransactionsFromStore(id, tahun);
+    let mappedPb = [];
+    if (scaledSchoolTx.length > 0) {
+      mappedPb = bulanNames.map((bulan, i) => {
+        const monthTx = scaledSchoolTx.filter(t => getMonthFromDate(t.tanggal) === i + 1);
+        const nominal = monthTx.reduce((sum, t) => sum + t.nominal, 0);
+        const qty = monthTx.reduce((sum, t) => sum + (t.qty || 1), 0);
+        return {
+          id: `pb-${id}-${i}`,
+          institusi_id: id,
+          nomor: i + 1,
+          bulan,
+          nominal_pengeluaran: nominal,
+          qty: qty,
+          sub_total: nominal
+        };
+      });
+    } else {
+      mappedPb = pb.map((p: any) => {
+        const nom = Math.round(Number(p.nominal_pengeluaran) * scaleRealisasi);
+        return {
+          ...p,
+          nominal_pengeluaran: nom,
+          sub_total: nom
+        };
+      });
+    }
+
+    const totalNominalSumber = mappedSumberDana.reduce((s: number, d: any) => s + d.nominal, 0);
+    const totalRealisasiSumber = mappedSumberDana.reduce((s: number, d: any) => s + d.realisasi, 0);
     const saldoSurplusDefisit = totalNominalSumber - totalRealisasiSumber;
 
     return {
       institusi: {
         ...inst,
-        nominal_alokasi: Number(inst.nominal_alokasi),
-        realisasi_total: Number(inst.realisasi_total),
-        selisih: Number(inst.selisih),
-        persentase_penyerapan: Number(inst.persentase_penyerapan)
+        nominal_alokasi: nominal,
+        realisasi_total: realisasi,
+        selisih: nominal - realisasi,
+        persentase_penyerapan: nominal > 0 ? (realisasi / nominal) * 100 : 0
       },
-      sumber_dana: sumberDana.map((sd: any) => ({
-        ...sd,
-        nominal: Number(sd.nominal),
-        realisasi: Number(sd.realisasi),
-        saldo_di_bank: Number(sd.saldo_di_bank)
-      })),
-      pengeluaran_bulanan: pb.map((p: any) => ({
-        ...p,
-        nominal_pengeluaran: Number(p.nominal_pengeluaran),
-        sub_total: Number(p.sub_total)
-      })),
+      sumber_dana: mappedSumberDana,
+      pengeluaran_bulanan: mappedPb,
       saldo_surplus_defisit: saldoSurplusDefisit,
     };
   }
@@ -689,8 +755,17 @@ export function getProfilInstitusi(id: string, tahun: number = 2026): ProfilInst
       const list = getInstitusiByJenjang(j);
       const match = list.find(inst => inst.id === id);
       if (match) {
-        const nominal = Math.round(match.nominal_alokasi * scale);
-        const realisasi = Math.min(nominal, Math.round(match.realisasi_total * scale * shift));
+        let nominal = Math.round(match.nominal_alokasi * scale);
+        let realisasi = Math.min(nominal, Math.round(match.realisasi_total * scale * shift));
+
+        if (id === 'inst-sd-0') {
+          const mentengData = MENTENG_YEAR_DATA[tahun];
+          if (mentengData) {
+            nominal = mentengData.alokasi;
+            realisasi = mentengData.realisasi;
+          }
+        }
+
         found = {
           ...match,
           nominal_alokasi: nominal,
@@ -706,7 +781,26 @@ export function getProfilInstitusi(id: string, tahun: number = 2026): ProfilInst
   if (!found) return null;
 
   const sumberDana = generateSumberDana(found, tahun);
-  const pengeluaranBulanan = generatePengeluaranBulanan(found);
+  const scaledSchoolTx = getSchoolTransactionsFromStore(id, tahun);
+  let pengeluaranBulanan = [];
+  if (scaledSchoolTx.length > 0) {
+    pengeluaranBulanan = bulanNames.map((bulan, i) => {
+      const monthTx = scaledSchoolTx.filter(t => getMonthFromDate(t.tanggal) === i + 1);
+      const nominal = monthTx.reduce((sum, t) => sum + t.nominal, 0);
+      const qty = monthTx.reduce((sum, t) => sum + (t.qty || 1), 0);
+      return {
+        id: `pb-${id}-${i}`,
+        institusi_id: id,
+        nomor: i + 1,
+        bulan,
+        nominal_pengeluaran: nominal,
+        qty: qty,
+        sub_total: nominal
+      };
+    });
+  } else {
+    pengeluaranBulanan = generatePengeluaranBulanan(found);
+  }
 
   const totalNominalSumber = sumberDana.reduce((s, d) => s + d.nominal, 0);
   const totalRealisasiSumber = sumberDana.reduce((s, d) => s + d.realisasi, 0);
@@ -791,6 +885,51 @@ export function getRincianPengeluaranBulanan(
   nomorBulan: number,
   tahun: number = 2026
 ): RincianPengeluaranBulanan | null {
+  const scaledSchoolTx = getSchoolTransactionsFromStore(institusiId, tahun);
+  
+  if (scaledSchoolTx.length > 0) {
+    const instName = scaledSchoolTx[0].namaInstitusi;
+    const monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const bulanName = monthNames[nomorBulan - 1] || 'Januari';
+    const monthlyTx = scaledSchoolTx.filter(t => getMonthFromDate(t.tanggal) === nomorBulan);
+
+    const items: RincianPengeluaranItem[] = monthlyTx.map((t, idx) => {
+      const qty = t.qty > 0 ? t.qty : 1;
+      const itemTotalAfterTax = t.nominal;
+      const itemSubtotalBeforeTax = Math.round(itemTotalAfterTax / 1.11);
+      const hargaSatuan = Math.round(itemSubtotalBeforeTax / qty);
+      const jumlah = hargaSatuan * qty;
+
+      return {
+        id: t.id,
+        nomor: idx + 1,
+        nama_produk_jasa: t.item,
+        harga_satuan: hargaSatuan,
+        qty: qty,
+        jumlah: jumlah
+      };
+    });
+
+    const total = monthlyTx.reduce((sum, t) => sum + t.nominal, 0);
+    const sub_total = items.reduce((sum, item) => sum + item.jumlah, 0);
+    const pajak_nominal = total - sub_total;
+
+    return {
+      institusi_id: institusiId,
+      institusi_nama: instName,
+      bulan: bulanName,
+      nomor_bulan: nomorBulan,
+      items: items,
+      sub_total: sub_total,
+      pajak_persen: 11,
+      pajak_nominal: pajak_nominal,
+      total: total
+    };
+  }
+
   const db = getDb();
   if (db) {
     const inst = db.institusi_pendidikan.find((i: any) => i.id === institusiId);
@@ -803,21 +942,56 @@ export function getRincianPengeluaranBulanan(
       (item: any) => item.institusi_id === institusiId && item.nomor_bulan === nomorBulan
     );
 
-    const total = Number(pb.nominal_pengeluaran);
+    let scaleRealisasi = 1.0;
+    if (institusiId === 'inst-sd-0') {
+      const mentengData = MENTENG_YEAR_DATA[tahun];
+      if (mentengData) {
+        scaleRealisasi = mentengData.realisasi / 1129655153;
+      }
+    } else {
+      const targetTahun = tahunAnggaranData.find(t => t.tahun === tahun) || tahunAnggaranData[6];
+      const baseTahun = tahunAnggaranData[6];
+      scaleRealisasi = targetTahun.total_anggaran > 0 ? targetTahun.total_anggaran / baseTahun.total_anggaran : 1.0;
+    }
+
+    const total = Math.round(Number(pb.nominal_pengeluaran) * scaleRealisasi);
     const subTotal = Math.round(total / 1.11);
     const pajakNominal = total - subTotal;
+
+    let distributedSum = 0;
+    const mappedItems = items.map((item: any) => ({
+      ...item,
+      harga_satuan: Number(item.harga_satuan),
+      qty: Number(item.qty),
+      jumlah: Number(item.jumlah)
+    })).sort((a: any, b: any) => a.nomor - b.nomor);
+
+    const scaledItems = mappedItems.map((item: any, idx: number) => {
+      const isLast = idx === mappedItems.length - 1;
+      let itemJumlah = 0;
+      let hargaSatuan = 0;
+      if (isLast) {
+        itemJumlah = subTotal - distributedSum;
+        hargaSatuan = itemJumlah;
+      } else {
+        itemJumlah = Math.round(item.jumlah * scaleRealisasi);
+        hargaSatuan = Math.round(itemJumlah / item.qty);
+        itemJumlah = hargaSatuan * item.qty;
+        distributedSum += itemJumlah;
+      }
+      return {
+        ...item,
+        harga_satuan: hargaSatuan,
+        jumlah: itemJumlah
+      };
+    });
 
     return {
       institusi_id: inst.id,
       institusi_nama: inst.nama_institusi,
       bulan: pb.bulan,
       nomor_bulan: pb.nomor,
-      items: items.map((item: any) => ({
-        ...item,
-        harga_satuan: Number(item.harga_satuan),
-        qty: Number(item.qty),
-        jumlah: Number(item.jumlah)
-      })).sort((a: any, b: any) => a.nomor - b.nomor),
+      items: scaledItems,
       sub_total: subTotal,
       pajak_persen: PAJAK_PERSEN,
       pajak_nominal: pajakNominal,
@@ -1276,12 +1450,425 @@ export let mockAnomalies: AuditAnomaly[] = [
     status: 'SELESAI',
     tanggal_ditemukan: '2026-03-22',
     audit_what: 'Indikasi pengadaan fiktif untuk pembelian alat tulis kantor (ATK) dalam jumlah tidak wajar.',
-    audit_why: 'Volume pembelian ATK yang dilaporkan (misal: 500 rim kertas A4 untuk 1 bulan operasional sekolah) dinilai melebihi kebutuhan riil sekolah dan tidak didukung bukti fisik di gudang.',
-    audit_where: 'SDN 01 Menteng, DKI Jakarta.',
-    audit_when: 'Periode Transaksi Maret 2026, ditemukan pada 22 Maret 2026.',
-    audit_who: 'Bendahara Sekolah (Ibu Rina Amalia) dan Toko ATK Makmur Jaya.',
     audit_how: 'Melakukan verifikasi fisik sediaan barang (stock opname) di gudang sekolah, mencocokkan nota pembelian dengan surat jalan pengiriman barang, dan memberikan sanksi administratif.',
   }
 ];
+
+export const MENTENG_YEAR_DATA: Record<number, { alokasi: number; realisasi: number }> = {
+  2020: { alokasi: 1_667_325_189, realisasi: 704_238_970 },
+  2021: { alokasi: 1_663_453_425, realisasi: 711_051_852 },
+  2022: { alokasi: 1_663_453_425, realisasi: 719_499_997 },
+  2023: { alokasi: 2_154_816_334, realisasi: 877_312_945 },
+  2024: { alokasi: 2_340_661_332, realisasi: 952_977_984 },
+  2025: { alokasi: 2_543_401_310, realisasi: 1_048_438_799 },
+  2026: { alokasi: 2_707_071_598, realisasi: 1_129_655_153 },
+};
+
+function getMonthFromDate(dateStr: string): number {
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return parseInt(parts[1], 10);
+    }
+  }
+  const months: Record<string, number> = {
+    jan: 1, feb: 2, mar: 3, apr: 4, mei: 5, jun: 6,
+    jul: 7, agu: 8, sep: 9, okt: 10, nov: 11, des: 12
+  };
+  const parts = dateStr.trim().split(/\s+/);
+  if (parts.length === 3) {
+    const monthStr = parts[1].toLowerCase();
+    return months[monthStr] || 1;
+  }
+  return 1;
+}
+
+function getSchoolTransactionsFromStore(institusiId: string, tahun: number): TransaksiGlobal[] {
+  let txList: TransaksiGlobal[] = [];
+  try {
+    const state = useAppStore.getState();
+    if (state && state.transaksiList) {
+      txList = state.transaksiList;
+    }
+  } catch (e) {}
+  if (!txList || txList.length === 0) {
+    txList = INITIAL_TRANSACTIONS;
+  }
+
+  const schoolTx = txList.filter(t => t.institusiId === institusiId);
+  if (schoolTx.length === 0) {
+    return [];
+  }
+
+  // Scale transactions
+  let scaleRealisasi = 1.0;
+  if (institusiId === 'inst-sd-0') {
+    const mentengData = MENTENG_YEAR_DATA[tahun] || MENTENG_YEAR_DATA[2026];
+    scaleRealisasi = mentengData.realisasi / 1129655153;
+  } else {
+    const targetTahun = tahunAnggaranData.find(t => t.tahun === tahun) || tahunAnggaranData[6];
+    const baseTahun = tahunAnggaranData[6];
+    scaleRealisasi = targetTahun.total_anggaran > 0 ? targetTahun.total_anggaran / baseTahun.total_anggaran : 1.0;
+  }
+
+  let scaledSchoolTx = schoolTx.map(t => {
+    let newTanggal = t.tanggal;
+    const dateParts = t.tanggal.trim().split(/\s+/);
+    if (dateParts.length === 3) {
+      newTanggal = `${dateParts[0]} ${dateParts[1]} ${tahun}`;
+    }
+    const scaledNominal = Math.round(t.nominal * scaleRealisasi);
+    const scaledHargaSatuan = t.qty > 0 ? Math.round(scaledNominal / t.qty) : Math.round(t.hargaSatuan * scaleRealisasi);
+    return {
+      ...t,
+      tanggal: newTanggal,
+      nominal: scaledNominal,
+      hargaSatuan: scaledHargaSatuan,
+    };
+  });
+
+  // Apply rounding error correction if SDN 01 Menteng
+  if (institusiId === 'inst-sd-0' && scaledSchoolTx.length > 0) {
+    const mentengData = MENTENG_YEAR_DATA[tahun] || MENTENG_YEAR_DATA[2026];
+    const targetRealisasi = mentengData.realisasi;
+    const sumOfScaled = scaledSchoolTx.reduce((sum, t) => sum + t.nominal, 0);
+    const diff = targetRealisasi - sumOfScaled;
+    if (diff !== 0) {
+      const lastIdx = scaledSchoolTx.length - 1;
+      scaledSchoolTx[lastIdx].nominal += diff;
+      if (scaledSchoolTx[lastIdx].qty > 0) {
+        scaledSchoolTx[lastIdx].hargaSatuan = Math.round(scaledSchoolTx[lastIdx].nominal / scaledSchoolTx[lastIdx].qty);
+      } else {
+        scaledSchoolTx[lastIdx].hargaSatuan = scaledSchoolTx[lastIdx].nominal;
+      }
+    }
+  }
+
+  return scaledSchoolTx;
+}
+
+export const MENTENG_TRANSACTIONS: TransaksiGlobal[] = [
+  {
+    id: 'tr-glob-1',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Konsumsi Rapat Pleno Wali Murid',
+    qty: 1,
+    hargaSatuan: 89000,
+    nominal: 89000,
+    strukStatus: 'VALID',
+    strukMessage: 'Faktur kuitansi warung makan terverifikasi lunas.',
+    invoiceNo: 'INV-MNT-881A',
+    vendorName: 'ZT Toko Sembako Hasil'
+  },
+  {
+    id: 'tr-glob-2',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Snack Guru Rapat Bulanan',
+    qty: 1,
+    hargaSatuan: 89000,
+    nominal: 89000,
+    strukStatus: 'VALID',
+    strukMessage: 'Kuitansi makanan ringan terverifikasi.',
+    invoiceNo: 'INV-MNT-881B',
+    vendorName: 'ZT Toko Sembako Hasil'
+  },
+  {
+    id: 'tr-glob-3',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Seragam Olahraga Siswa Baru',
+    qty: 2,
+    hargaSatuan: 25324395,
+    nominal: 50648790,
+    strukStatus: 'VALID',
+    strukMessage: 'SPK & Bukti timbang fisik seragam terverifikasi di gudang.',
+    invoiceNo: 'INV-AFT-12A',
+    vendorName: 'ALFA TOWER LT. 12, A'
+  },
+  {
+    id: 'tr-glob-4',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Pembelian Sepatu Olahraga Guru Penjas',
+    qty: 1,
+    hargaSatuan: 500000,
+    nominal: 500000,
+    strukStatus: 'VALID',
+    strukMessage: 'Kuitansi toko ritel terverifikasi.',
+    invoiceNo: 'INV-AFT-12B',
+    vendorName: 'ALFA TOWER LT. 12, A'
+  },
+  {
+    id: 'tr-glob-5',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Minyak & Sembako Dapur Guru',
+    qty: 1,
+    hargaSatuan: 89000,
+    nominal: 89000,
+    strukStatus: 'VALID',
+    strukMessage: 'Kuitansi belanja dapur lunas.',
+    invoiceNo: 'INV-MNT-881C',
+    vendorName: 'ZT Toko Sembako Hasil'
+  },
+  {
+    id: 'tr-glob-6',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Sabun Cuci Piring & Kain Pel Kelas',
+    qty: 1,
+    hargaSatuan: 89000,
+    nominal: 89000,
+    strukStatus: 'VALID',
+    strukMessage: 'Bukti nota warung lunas.',
+    invoiceNo: 'INV-MNT-881D',
+    vendorName: 'ZT Toko Sembako Hasil'
+  },
+  {
+    id: 'tr-glob-7',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Lainnya',
+    item: 'Gula & Teh Rapat Guru',
+    qty: 0,
+    hargaSatuan: 89000,
+    nominal: 89000,
+    strukStatus: 'VALID',
+    strukMessage: 'Pembelian logistik teh rapat lunas.',
+    invoiceNo: 'INV-MNT-881E',
+    vendorName: 'ZT Toko Sembako Hasil'
+  },
+  {
+    id: 'tr-glob-8',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Spidol & Papan Tulis Baru Kelas VI',
+    qty: 1,
+    hargaSatuan: 25275000,
+    nominal: 25275000,
+    strukStatus: 'VALID',
+    strukMessage: 'Faktur e-katalog terverifikasi dengan fisik barang.',
+    invoiceNo: 'INV-ARK-092A',
+    vendorName: 'Arkan Pustaka Mandiri'
+  },
+  {
+    id: 'tr-glob-9',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Buku Agenda & Absensi Guru',
+    qty: 1,
+    hargaSatuan: 25275000,
+    nominal: 25275000,
+    strukStatus: 'VALID',
+    strukMessage: 'Faktur pengadaan buku administrasi sekolah valid.',
+    invoiceNo: 'INV-ARK-092B',
+    vendorName: 'Arkan Pustaka Mandiri'
+  },
+  {
+    id: 'tr-glob-10',
+    tanggal: '02 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Kertas HVS A4 & F4 Sinar Dunia',
+    qty: 1,
+    hargaSatuan: 25275000,
+    nominal: 25275000,
+    strukStatus: 'VALID',
+    strukMessage: 'Kuitansi belanja kertas lunas.',
+    invoiceNo: 'INV-ARK-092C',
+    vendorName: 'Arkan Pustaka Mandiri'
+  },
+  {
+    id: 'tr-glob-11',
+    tanggal: '31 Mar 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Sarana Prasarana',
+    item: 'Rehabilitasi Gedung Perpustakaan & UKS Baru',
+    qty: 1,
+    hargaSatuan: 450000000,
+    nominal: 450000000,
+    strukStatus: 'DUPLIKAT',
+    strukMessage: 'Peringatan: Deteksi Markup! Rencana Anggaran Biaya (RAB) terindikasi 35% di atas standar harga sarana prasarana sekolah.',
+    invoiceNo: 'CONSTR-MNT-029',
+    vendorName: 'PT Pembangunan Nusantara Jaya'
+  },
+  {
+    id: 'tr-glob-12',
+    tanggal: '15 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Pengadaan Lisensi Software Pembelajaran Interaktif (MS Office)',
+    qty: 1,
+    hargaSatuan: 25000000,
+    nominal: 25000000,
+    strukStatus: 'VALID',
+    strukMessage: 'Faktur berlisensi resmi Microsoft Indonesia lunas.',
+    invoiceNo: 'INV-MS-99882',
+    vendorName: 'Microsoft Indonesia'
+  },
+  {
+    id: 'tr-glob-13',
+    tanggal: '12 Jan 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Buku & Perpus',
+    item: 'Pengadaan Buku Pelajaran Kurikulum Merdeka (Fase A & B)',
+    qty: 1,
+    hargaSatuan: 120000000,
+    nominal: 120000000,
+    strukStatus: 'VALID',
+    strukMessage: 'Nota & tanda terima buku valid.',
+    invoiceNo: 'INV-2026-089A',
+    vendorName: 'CV Pustaka Raya'
+  },
+  {
+    id: 'tr-glob-14',
+    tanggal: '24 Jan 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Buku & Perpus',
+    item: 'Pengadaan Buku Paket Pelajaran Tambahan Kurikulum',
+    qty: 1,
+    hargaSatuan: 120000000,
+    nominal: 120000000,
+    strukStatus: 'DUPLIKAT',
+    strukMessage: 'Peringatan: Duplikasi Invoice terdeteksi! Berkas scan kuitansi identik dengan transaksi tanggal 12 Jan.',
+    invoiceNo: 'INV-2026-089A',
+    vendorName: 'CV Pustaka Raya'
+  },
+  {
+    id: 'tr-glob-15',
+    tanggal: '15 Feb 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Pengadaan Komputer & ATK Lab Komputer Sekolah',
+    qty: 1,
+    hargaSatuan: 63636363,
+    nominal: 63636363,
+    strukStatus: 'ANOMALI_PAJAK',
+    strukMessage: 'Peringatan: Kurang bayar setoran PPN 11%. Hanya disetor Rp 2.500.000 dari kewajiban Rp 7.000.000.',
+    invoiceNo: 'INV-2026-COMP',
+    vendorName: 'CV Computerindo Jakarta'
+  },
+  {
+    id: 'tr-glob-16',
+    tanggal: '05 Apr 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Penarikan Kas Tunai Operasional Bendahara BOS',
+    qty: 1,
+    hargaSatuan: 120000000,
+    nominal: 120000000,
+    strukStatus: 'STRUK_BURAM',
+    strukMessage: 'Peringatan: Penarikan tunai besar tanpa disertai dokumen rincian kuitansi belanja (SPJ) pendukung.',
+    invoiceNo: 'CASH-OUT-MNT',
+    vendorName: 'Biro Keuangan SDN 01 Menteng'
+  },
+  {
+    id: 'tr-glob-17',
+    tanggal: '18 Jan 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Operasional',
+    item: 'Tagihan Listrik PLN & Layanan Internet WiFi Sekolah',
+    qty: 1,
+    hargaSatuan: 4700000,
+    nominal: 4700000,
+    strukStatus: 'VALID',
+    strukMessage: 'Pembayaran tagihan utilitas bulanan valid.',
+    invoiceNo: 'INV-PLN-8827A',
+    vendorName: 'PT PLN (Persero)'
+  },
+  {
+    id: 'tr-glob-18',
+    tanggal: '10 Feb 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Sarana Prasarana',
+    item: 'Pemeliharaan AC dan Ruang Kelas Belajar',
+    qty: 10,
+    hargaSatuan: 1540000,
+    nominal: 15400000,
+    strukStatus: 'VALID',
+    strukMessage: 'Pengerjaan AC & pemeliharaan selesai terverifikasi.',
+    invoiceNo: 'INV-AC-889B',
+    vendorName: 'CV CoolTech Mandiri'
+  },
+  {
+    id: 'tr-glob-19',
+    tanggal: '22 Mar 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Kegiatan Siswa',
+    item: 'Penyelenggaraan Lomba Cerdas Cermat Tingkat Kecamatan',
+    qty: 1,
+    hargaSatuan: 8500000,
+    nominal: 8500000,
+    strukStatus: 'VALID',
+    strukMessage: 'Laporan pertanggungjawaban kegiatan siswa lengkap.',
+    invoiceNo: 'INV-OSN-MNT',
+    vendorName: 'Panitia Lomba Kecamatan'
+  },
+  {
+    id: 'tr-glob-20',
+    tanggal: '02 Jan 2026',
+    institusiId: 'inst-sd-0',
+    namaInstitusi: 'SDN 01 Menteng',
+    jenjang: 'SD',
+    kategori: 'Buku & Perpus',
+    item: 'Langganan Platform Perpustakaan Digital & E-Book Sekolah',
+    qty: 1,
+    hargaSatuan: 75000000,
+    nominal: 75000000,
+    strukStatus: 'VALID',
+    strukMessage: 'Invoice langganan database riset internasional lunas.',
+    invoiceNo: 'INV-SD-ELSEVIER',
+    vendorName: 'Elsevier BV'
+  }
+];
+
 
 
