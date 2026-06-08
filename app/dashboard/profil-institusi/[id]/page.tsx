@@ -51,7 +51,7 @@ export default function ProfilInstitusiDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { activeTahun, addNotification } = useAppStore();
+  const { activeTahun, addNotification, transaksiList, setTransaksiList } = useAppStore();
 
   const profilData = useMemo(() => getProfilInstitusi(id, activeTahun), [id, activeTahun]);
 
@@ -68,7 +68,6 @@ export default function ProfilInstitusiDetailPage() {
   const [activeAnomaly, setActiveAnomaly] = useState<AuditAnomaly | null>(null);
 
   // VERCEL-STYLE 1: Transaksi List State
-  const [transaksiList, setTransaksiList] = useState<TransaksiItem[]>([]);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('Semua');
 
   // VERCEL-STYLE 2: Tambah Pengeluaran Modal State
@@ -250,7 +249,7 @@ export default function ProfilInstitusiDetailPage() {
     setDocuments(initialDocs);
     setTransaksiList(initialTrans);
     setChatMessages(initialChats);
-  }, [id, activeTahun]);
+  }, [id, activeTahun, setTransaksiList]);
 
   // Sync active anomaly
   useEffect(() => {

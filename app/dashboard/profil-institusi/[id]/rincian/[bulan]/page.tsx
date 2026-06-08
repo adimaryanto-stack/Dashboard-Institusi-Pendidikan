@@ -15,11 +15,11 @@ export default function RincianPengeluaranPage() {
   const router = useRouter();
   const institusiId = params.id as string;
   const nomorBulan = parseInt(params.bulan as string, 10);
-  const { activeTahun } = useAppStore();
+  const { activeTahun, transaksiList } = useAppStore();
 
   const rincianData = useMemo(
     () => getRincianPengeluaranBulanan(institusiId, nomorBulan, activeTahun),
-    [institusiId, nomorBulan, activeTahun]
+    [institusiId, nomorBulan, activeTahun, transaksiList]
   );
 
   // Editable state
