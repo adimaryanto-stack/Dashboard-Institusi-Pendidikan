@@ -7,7 +7,13 @@ import Header from '@/components/layout/Header';
 import { useAppStore } from '@/lib/store';
 import { getProfilInstitusi, mockAnomalies, MENTENG_TRANSACTIONS, MENTENG_YEAR_DATA } from '@/lib/data';
 import { fmtRupiah, fmtPct } from '@/lib/utils/formatters';
-import { SumberDanaInstitusi, PengeluaranBulananInstitusi, AuditAnomaly } from '@/types';
+import {
+  InstitusiPendidikan,
+  SumberDanaInstitusi,
+  PengeluaranBulananInstitusi,
+  TransaksiGlobal,
+  AuditAnomaly
+} from '@/types';
 import {
   ArrowLeft, Banknote, CreditCard, TrendingUp, TrendingDown,
   AlertTriangle, ShieldAlert, ShieldCheck, CheckCircle2, FileText,
@@ -135,10 +141,10 @@ export default function ProfilInstitusiDetailPage() {
     ];
 
     // Populate transaction list based on school id
-    let initialTrans: TransaksiItem[] = [
-      { id: 'tr-1', tanggal: '12 Jan 2026', kategori: 'Gaji Honorer', item: 'Pembayaran Honor Guru Honorer (Januari)', qty: 15, hargaSatuan: 2500000, nominal: 37500000, strukStatus: 'VALID', strukMessage: 'Nominal sesuai dengan SK penetapan guru honorer.', invoiceNo: 'INV-2026-001H', vendorName: 'Kas Utama Sekolah' },
-      { id: 'tr-2', tanggal: '18 Jan 2026', kategori: 'Operasional', item: 'Pembayaran Tagihan Listrik & Internet WiFi', qty: 1, hargaSatuan: 4700000, nominal: 4700000, strukStatus: 'VALID', strukMessage: 'Faktur PLN & Indihome terverifikasi lunas.', invoiceNo: 'INV-PLN-8827A', vendorName: 'PT PLN (Persero)' },
-      { id: 'tr-3', tanggal: '05 Feb 2026', kategori: 'Sarana Prasarana', item: 'Pembelian Meja & Kursi Kelas Kayu Jati', qty: 30, hargaSatuan: 400000, nominal: 12000000, strukStatus: 'VALID', strukMessage: 'Struk terverifikasi dengan fisik barang di gudang.', invoiceNo: 'INV-2026-MEBEL', vendorName: 'UD Kayu Jaya Mandiri' },
+    let initialTrans: TransaksiGlobal[] = [
+      { id: 'tr-1', tanggal: '12 Jan 2026', kategori: 'Gaji Honorer', item: 'Pembayaran Honor Guru Honorer (Januari)', qty: 15, hargaSatuan: 2500000, nominal: 37500000, strukStatus: 'VALID', strukMessage: 'Nominal sesuai dengan SK penetapan guru honorer.', invoiceNo: 'INV-2026-001H', vendorName: 'Kas Utama Sekolah', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'SD' },
+      { id: 'tr-2', tanggal: '18 Jan 2026', kategori: 'Operasional', item: 'Pembayaran Tagihan Listrik & Internet WiFi', qty: 1, hargaSatuan: 4700000, nominal: 4700000, strukStatus: 'VALID', strukMessage: 'Faktur PLN & Indihome terverifikasi lunas.', invoiceNo: 'INV-PLN-8827A', vendorName: 'PT PLN (Persero)', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'SD' },
+      { id: 'tr-3', tanggal: '05 Feb 2026', kategori: 'Sarana Prasarana', item: 'Pembelian Meja & Kursi Kelas Kayu Jati', qty: 30, hargaSatuan: 400000, nominal: 12000000, strukStatus: 'VALID', strukMessage: 'Struk terverifikasi dengan fisik barang di gudang.', invoiceNo: 'INV-2026-MEBEL', vendorName: 'UD Kayu Jaya Mandiri', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'SD' },
     ];
 
     // Populate school chat messages
@@ -175,7 +181,10 @@ export default function ProfilInstitusiDetailPage() {
           strukStatus: t.strukStatus,
           strukMessage: t.strukMessage,
           invoiceNo: t.invoiceNo,
-          vendorName: t.vendorName
+          vendorName: t.vendorName,
+          institusiId: id,
+          namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown',
+          jenjang: profilData?.institusi?.jenjang || 'SD'
         };
       });
 
@@ -205,7 +214,7 @@ export default function ProfilInstitusiDetailPage() {
         { id: 'doc-6', name: 'SPJ_Konstruksi_Gedung_PT_PNJ.pdf', month: 'Maret', size: '12.4 MB', status: 'MISSING' as const, uploadedAt: '—' }
       );
       initialTrans.push(
-        { id: 'tr-ui-1', tanggal: '31 Mar 2026', kategori: 'Sarana Prasarana', item: 'Pembangunan Gedung Hub Mahasiswa Baru', qty: 1, hargaSatuan: 45000000000, nominal: 45000000000, strukStatus: 'DUPLIKAT', strukMessage: 'Rencana Anggaran Biaya (RAB) terindikasi markup 35% di atas standar harga LKPP Jawa Barat.', invoiceNo: 'CONSTR-UI-029', vendorName: 'PT Pembangunan Nusantara Jaya' }
+        { id: 'tr-ui-1', tanggal: '31 Mar 2026', kategori: 'Sarana Prasarana', item: 'Pembangunan Gedung Hub Mahasiswa Baru', qty: 1, hargaSatuan: 45000000000, nominal: 45000000000, strukStatus: 'DUPLIKAT', strukMessage: 'Rencana Anggaran Biaya (RAB) terindikasi markup 35% di atas standar harga LKPP Jawa Barat.', invoiceNo: 'CONSTR-UI-029', vendorName: 'PT Pembangunan Nusantara Jaya', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'UNIVERSITAS' }
       );
       initialChats.push(
         { id: 'c-2', sender: 'auditor', senderName: 'Auditor BPK', text: 'Tolong jelaskan penggelembungan dana pada item konstruksi Gedung Hub Mahasiswa di bulan Maret. Harga besi struktur 1.5x lebih mahal dari pasar.', time: '10:05' },
@@ -216,8 +225,8 @@ export default function ProfilInstitusiDetailPage() {
         { id: 'doc-5', name: 'Invoice_CV_Pustaka_Raya_089A.pdf', month: 'Januari', size: '1.5 MB', status: 'UNDER_REVIEW' as const, uploadedAt: '2026-01-24' }
       );
       initialTrans.push(
-        { id: 'tr-sma-1', tanggal: '12 Jan 2026', kategori: 'Buku & Perpus', item: 'Pengadaan Buku Pelajaran Kurikulum Merdeka', qty: 1, hargaSatuan: 120000000, nominal: 120000000, strukStatus: 'VALID', strukMessage: 'Faktur buku terverifikasi lengkap.', invoiceNo: 'INV-2026-089A', vendorName: 'CV Pustaka Raya' },
-        { id: 'tr-sma-2', tanggal: '24 Jan 2026', kategori: 'Buku & Perpus', item: 'Pengadaan Buku Paket Pelajaran Tambahan', qty: 1, hargaSatuan: 120000000, nominal: 120000000, strukStatus: 'DUPLIKAT', strukMessage: 'Peringatan: Duplikasi Invoice terdeteksi! File scan kuitansi identik dengan transaksi tanggal 12 Jan.', invoiceNo: 'INV-2026-089A', vendorName: 'CV Pustaka Raya' }
+        { id: 'tr-sma-1', tanggal: '12 Jan 2026', kategori: 'Buku & Perpus', item: 'Pengadaan Buku Pelajaran Kurikulum Merdeka', qty: 1, hargaSatuan: 120000000, nominal: 120000000, strukStatus: 'VALID', strukMessage: 'Faktur buku terverifikasi lengkap.', invoiceNo: 'INV-2026-089A', vendorName: 'CV Pustaka Raya', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'SMA' },
+        { id: 'tr-sma-2', tanggal: '24 Jan 2026', kategori: 'Buku & Perpus', item: 'Pengadaan Buku Paket Pelajaran Tambahan', qty: 1, hargaSatuan: 120000000, nominal: 120000000, strukStatus: 'DUPLIKAT', strukMessage: 'Peringatan: Duplikasi Invoice terdeteksi! File scan kuitansi identik dengan transaksi tanggal 12 Jan.', invoiceNo: 'INV-2026-089A', vendorName: 'CV Pustaka Raya', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'SMA' }
       );
       initialChats.push(
         { id: 'c-2', sender: 'auditor', senderName: 'Auditor BPK', text: 'Ada transaksi ganda senilai Rp 120.000.000 untuk CV Pustaka Raya di bulan Januari dengan invoice yang sama. Mohon segera diklarifikasi.', time: '11:15' },
@@ -229,7 +238,7 @@ export default function ProfilInstitusiDetailPage() {
         { id: 'doc-6', name: 'SSP_Pajak_PPN_ATK_Koreksi.pdf', month: 'Februari', size: '650 KB', status: 'UNDER_REVIEW' as const, uploadedAt: '2026-02-20' }
       );
       initialTrans.push(
-        { id: 'tr-smp-1', tanggal: '15 Feb 2026', kategori: 'Operasional', item: 'Pengadaan Komputer & ATK Sekolah', qty: 1, hargaSatuan: 63636363, nominal: 63636363, strukStatus: 'ANOMALI_PAJAK', strukMessage: 'Kurang bayar setoran PPN 11%. Disetor Rp 2.500.000 dari kewajiban Rp 7.000.000.', invoiceNo: 'INV-2026-COMP', vendorName: 'CV Computerindo Surabaya' }
+        { id: 'tr-smp-1', tanggal: '15 Feb 2026', kategori: 'Operasional', item: 'Pengadaan Komputer & ATK Sekolah', qty: 1, hargaSatuan: 63636363, nominal: 63636363, strukStatus: 'ANOMALI_PAJAK', strukMessage: 'Kurang bayar setoran PPN 11%. Disetor Rp 2.500.000 dari kewajiban Rp 7.000.000.', invoiceNo: 'INV-2026-COMP', vendorName: 'CV Computerindo Surabaya', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'SMP' }
       );
       initialChats.push(
         { id: 'c-2', sender: 'auditor', senderName: 'Auditor BPK', text: 'Setoran PPN untuk belanja komputer senilai Rp 63.6 Juta kurang Rp 4.5 Juta. Harap segera disetorkan.', time: '13:02' }
@@ -239,7 +248,7 @@ export default function ProfilInstitusiDetailPage() {
         { id: 'doc-5', name: 'Kuitansi_Tunai_Operasional_April.pdf', month: 'April', size: '512 KB', status: 'MISSING' as const, uploadedAt: '—' }
       );
       initialTrans.push(
-        { id: 'tr-itb-1', tanggal: '05 Apr 2026', kategori: 'Operasional', item: 'Penarikan Kas Tunai Operasional Mandiri', qty: 1, hargaSatuan: 12000000000, nominal: 12000000000, strukStatus: 'STRUK_BURAM', strukMessage: 'Penarikan tunai besar-besaran tanpa disertai nota rincian belanja pendukung (SPJ).', invoiceNo: 'CASH-OUT-ITB', vendorName: 'Biro Keuangan ITB' }
+        { id: 'tr-itb-1', tanggal: '05 Apr 2026', kategori: 'Operasional', item: 'Penarikan Kas Tunai Operasional Mandiri', qty: 1, hargaSatuan: 12000000000, nominal: 12000000000, strukStatus: 'STRUK_BURAM', strukMessage: 'Penarikan tunai besar-besaran tanpa disertai nota rincian belanja pendukung (SPJ).', invoiceNo: 'CASH-OUT-ITB', vendorName: 'Biro Keuangan ITB', institusiId: id, namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown', jenjang: profilData?.institusi?.jenjang || 'UNIVERSITAS' }
       );
       initialChats.push(
         { id: 'c-2', sender: 'auditor', senderName: 'Auditor BPK', text: 'Penarikan tunai Rp 12 Milyar pada 5 April belum melampirkan kuitansi detail belanja. Kami beri waktu 14 hari sebelum diblokir.', time: '14:20' }
@@ -247,7 +256,9 @@ export default function ProfilInstitusiDetailPage() {
     }
 
     setDocuments(initialDocs);
-    setTransaksiList(initialTrans);
+    if (!useAppStore.getState().isSupabaseMode) {
+      setTransaksiList(initialTrans);
+    }
     setChatMessages(initialChats);
   }, [id, activeTahun, setTransaksiList]);
 
@@ -618,19 +629,23 @@ export default function ProfilInstitusiDetailPage() {
     const itemDescription = formItems.length > 1
       ? `${mainQty}x ${mainItemName} (+ ${formItems.length - 1} item lainnya)`
       : `${mainQty}x ${mainItemName}`;
+    const txDate = new Date(formTanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
-    const newTrans: TransaksiItem = {
-      id: `tr-manual-${Date.now()}`,
-      tanggal: new Date(formTanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
-      kategori: formKategori,
+    const newTrans: TransaksiGlobal = {
+      id: `tr-${Date.now()}`,
+      tanggal: txDate,
+      kategori: 'Lainnya',
       item: itemDescription,
-      qty: formItems.reduce((sum, item) => sum + item.qty, 0),
+      qty: formItems.length > 0 ? formItems.reduce((s, i) => s + i.qty, 0) : 1,
       hargaSatuan: mainHarga,
       nominal: overallTotal,
       strukStatus: 'VALID',
       strukMessage: 'Dibuat secara manual dan disetujui instansi.',
       invoiceNo: `INV-MAN-${Date.now().toString().slice(-4)}`,
-      vendorName: formVendor || 'Vendor Umum'
+      vendorName: formVendor || 'Vendor Umum',
+      institusiId: id as string,
+      namaInstitusi: profilData?.institusi?.nama_institusi || 'Unknown',
+      jenjang: profilData?.institusi?.jenjang || 'SD'
     };
 
     setTransaksiList(prev => [newTrans, ...prev]);

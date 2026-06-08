@@ -45,6 +45,11 @@ interface AppState {
   addTransaksi: (t: TransaksiGlobal) => void;
   setTransaksiList: (list: TransaksiGlobal[] | ((prev: TransaksiGlobal[]) => TransaksiGlobal[])) => void;
 
+  // Rencana states
+  rencanaList: TransaksiGlobal[];
+  setRencanaList: (list: TransaksiGlobal[] | ((prev: TransaksiGlobal[]) => TransaksiGlobal[])) => void;
+  removeRencana: (id: string) => void;
+
   // Notification states
   notifications: NotificationItem[];
   addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'unread'>) => void;
@@ -73,6 +78,32 @@ export const useAppStore = create<AppState>((set) => ({
   addTransaksi: (t) => set((state) => ({ transaksiList: [t, ...state.transaksiList] })),
   setTransaksiList: (list) => set((state) => ({
     transaksiList: typeof list === 'function' ? list(state.transaksiList) : list
+  })),
+
+  // Rencana initial states
+  rencanaList: [
+    {
+      id: 'rab-1',
+      tanggal: '15 Sep 2026',
+      institusiId: 'inst-sd-0',
+      namaInstitusi: 'SDN 01 Menteng',
+      jenjang: 'SD',
+      kategori: 'Sarana Prasarana',
+      item: 'Rencana Pengadaan AC Kelas',
+      qty: 5,
+      hargaSatuan: 4000000,
+      nominal: 20000000,
+      strukStatus: 'VALID',
+      strukMessage: 'Rencana anggaran telah di-review',
+      invoiceNo: 'RAB-AC-001',
+      vendorName: 'Toko Elektronik Makmur'
+    }
+  ],
+  setRencanaList: (list) => set((state) => ({
+    rencanaList: typeof list === 'function' ? list(state.rencanaList) : list
+  })),
+  removeRencana: (id) => set((state) => ({
+    rencanaList: state.rencanaList.filter((r) => r.id !== id)
   })),
 
   // Notification initial states

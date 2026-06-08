@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store';
 import {
   LayoutDashboard, DollarSign, MapPin, Building2,
   GraduationCap, Users, ChevronDown, ChevronRight,
-  Menu, X, Landmark, School, ShieldCheck, CreditCard
+  Menu, X, Landmark, School, ShieldCheck, CreditCard, ClipboardList
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -72,6 +72,11 @@ export default function Sidebar() {
           <Link href="/dashboard/profil-institusi/inst-sd-0" className={`sidebar-item ${pathname.includes('/profil-institusi') ? 'active' : ''}`}>
             <School size={18} />
             <span>Profil Institusi</span>
+          </Link>
+
+          <Link href="/dashboard/rencana-anggaran" className={`sidebar-item ${pathname.includes('/rencana-anggaran') ? 'active' : ''}`}>
+            <ClipboardList size={18} />
+            <span>Rencana (RAB)</span>
           </Link>
 
           <Link href="/dashboard/pengeluaran" className={`sidebar-item ${pathname.includes('/pengeluaran') ? 'active' : ''}`}>

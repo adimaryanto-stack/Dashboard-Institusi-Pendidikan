@@ -22,7 +22,8 @@ export default function DashboardDbLoader({
     dbData,
     setDbData,
     isLoadingDb,
-    setIsLoadingDb
+    setIsLoadingDb,
+    setTransaksiList
   } = useAppStore();
 
   const [loaderText, setLoaderText] = useState('Menginisialisasi dasbor...');
@@ -125,6 +126,36 @@ export default function DashboardDbLoader({
         // Cache in Zustand store
         setDbData(loadedDb);
         setIsSupabaseMode(true);
+
+        // Sync rincian_pengeluaran_item to global transaksiList
+        const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const mappedTx = loadedDb.rincian_pengeluaran_item.map((item: any) => {
+          const inst = loadedDb.institusi_pendidikan.find((i: any) => i.id === item.institusi_id);
+          const monthShort = monthNamesShort[(item.nomor_bulan || 1) - 1];
+          let kategori: "Sarana Prasarana" | "Gaji Honorer" | "Operasional" | "Buku & Perpus" | "Kegiatan Siswa" | "Lainnya" = 'Operasional';
+          const lowerName = item.nama_produk_jasa?.toLowerCase() || '';
+          if (lowerName.includes('buku') || lowerName.includes('perpus')) kategori = 'Buku & Perpus';
+          else if (lowerName.includes('gaji') || lowerName.includes('honor')) kategori = 'Gaji Honorer';
+          else if (lowerName.includes('gedung') || lowerName.includes('sarana')) kategori = 'Sarana Prasarana';
+
+          return {
+            id: `tr-db-${item.id}`,
+            tanggal: `15 ${monthShort} 2026`, // default dummy date in the middle of the month
+            institusiId: item.institusi_id,
+            namaInstitusi: inst?.nama_institusi || 'Unknown',
+            jenjang: inst?.jenjang || 'SD',
+            kategori: kategori,
+            item: item.nama_produk_jasa,
+            qty: item.qty || 1,
+            hargaSatuan: item.harga_satuan,
+            nominal: item.jumlah,
+            strukStatus: 'VALID' as "VALID" | "DUPLIKAT" | "ANOMALI_PAJAK" | "STRUK_BURAM",
+            strukMessage: 'Data terverifikasi (Sinkronisasi Cloud Supabase)',
+            invoiceNo: `INV-${item.id.substring(0, 6).toUpperCase()}`,
+            vendorName: 'Vendor Eksternal'
+          };
+        });
+        setTransaksiList(mappedTx);
 
         // Sync local memory let variables in lib/data
         updateTahunAnggaranData(loadedDb.tahun_anggaran);
