@@ -7,7 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Warning: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing from environment variables.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Only intercept if we are hitting InsForge
+const useInsForgeInterceptor = supabaseUrl.includes('insforge.app');
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, useInsForgeInterceptor ? {
   global: {
     fetch: (url, options) => {
       let targetUrl = '';
@@ -24,5 +27,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       return fetch(replacedUrl, options);
     }
   }
-});
+} : {});
 

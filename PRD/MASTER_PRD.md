@@ -1,6 +1,6 @@
-# PRD — Sistem Transparansi Anggaran Pendidikan Indonesia
-**Version:** 3.0 (Final Consolidated)  
-**Date:** 2 Mei 2026  
+# PRD — Dashboard Institusi (Sistem Transparansi Anggaran)
+**Version:** 4.0 (Final Consolidated)  
+**Date:** 24 Juni 2026  
 **Status:** ✅ APPROVED FOR DEVELOPMENT  
 **Project Type:** Web-Based Spreadsheet Dashboard — Education Budget Transparency
 
@@ -956,13 +956,13 @@ npm run dev                   # http://localhost:3002
 | Error Tracking | Sentry |
 
 ### Checklist Pre-Deploy
-- [ ] Semua environment variable dikonfigurasi di Vercel
-- [ ] Migrasi database production sudah dijalankan
-- [ ] Seed data: 38 provinsi, master kabkota, default SUPER_ADMIN user
-- [ ] HTTPS aktif (auto via Vercel + Cloudflare)
-- [ ] Smoke test: Login → Dashboard → Edit cell → Cascade update → Export
-- [ ] Performance test dengan 10.000+ records
-- [ ] RBAC test: akses menu yang tidak diizinkan per role
+- [x] Semua environment variable dikonfigurasi di Vercel (InsForge / Supabase)
+- [x] Migrasi database production sudah dijalankan
+- [x] Seed data: 38 provinsi, master kabkota, default SUPER_ADMIN user
+- [x] HTTPS aktif (auto via Vercel + Cloudflare)
+- [x] Smoke test: Login → Dashboard → Edit cell → Cascade update → Export
+- [x] Performance test dengan 10.000+ records
+- [x] RBAC test: akses menu yang tidak diizinkan per role
 
 ---
 

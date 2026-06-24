@@ -1,11 +1,19 @@
-# Dashboard Institusi Pendidikan 🇮🇩
+# Dashboard Institusi 🇮🇩
 
 Sistem informasi modern bergaya *spreadsheet* untuk pemantauan, alokasi, transparansi, dan audit Anggaran Pendapatan dan Belanja Negara (APBN) di sektor Pendidikan Indonesia. 
 
 Aplikasi ini menyajikan *dashboard* dengan performa tinggi yang memungkinkan instansi terkait (mulai dari tingkat nasional hingga daerah) memantau alokasi vs realisasi anggaran secara berjenjang dan *real-time*.
 
-![Dashboard Institusi Pendidikan](public/vercel.svg)  
-*(Ganti dengan screenshot riil nanti)*
+## 📸 Tangkapan Layar Aplikasi (Localhost)
+
+### 1. Dasbor Utama (Ringkasan APBN)
+![Dasbor Utama](public/screenshot-dashboard.png)
+
+### 2. Papan Rencana Anggaran Belanja (RAB) & Diskusi Realtime
+![Rencana Anggaran & Diskusi Realtime](public/screenshot-rencana-anggaran.png)
+
+### 3. Alokasi Per Provinsi (Spreadsheet Interface)
+![Alokasi Provinsi](public/screenshot-provinsi.png)
 
 ---
 
@@ -61,7 +69,7 @@ Pastikan Anda memiliki [Node.js](https://nodejs.org/) (versi 18+ disarankan) ter
 
 ### 1. Clone repository ini
 ```bash
-git clone https://github.com
+git clone https://github.com/adimaryanto-stack/Dashboard-Institusi-Pendidikan.git
 cd Dashboard-Institusi-Pendidikan
 ```
 
@@ -84,11 +92,13 @@ Buka [http://localhost:3002](http://localhost:3002) di browser Anda. Halaman uta
 
 ---
 
-## 📖 Dokumentasi Lengkap (PRD)
+## 📖 Dokumentasi Lengkap & Riwayat Rilis
 
-Dokumentasi rancangan produk, arsitektur, dan peta jalan (*roadmap*) pengembangan telah digabung menjadi satu file untuk memudahkan referensi:
+Dokumentasi rancangan produk, arsitektur, peta jalan (*roadmap*) pengembangan, serta riwayat perubahan sistem dapat diakses melalui berkas berikut:
 
-- Cek file **[`PRD/MASTER_PRD.md`](./PRD/MASTER_PRD.md)**
+- **[`PRD/MASTER_PRD.md`](./PRD/MASTER_PRD.md)** — Dokumen Persyaratan Produk (PRD) Konsolidasi.
+- **[`PRD/MVP_Roadmap_v2_Spreadsheet.md`](./PRD/MVP_Roadmap_v2_Spreadsheet.md)** — Roadmap Pengembangan MVP Fitur Spreadsheet.
+- **[`CHANGELOG.md`](./CHANGELOG.md)** — Catatan lengkap rilis versi dan daftar perubahan fitur.
 
 ---
 

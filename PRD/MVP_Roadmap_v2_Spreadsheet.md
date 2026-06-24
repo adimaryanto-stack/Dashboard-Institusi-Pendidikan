@@ -1,10 +1,10 @@
 # MVP Roadmap v2 - Spreadsheet Interface
-# Sistem Transparansi Anggaran Pendidikan
+# Dashboard Institusi
 
-**Project**: Transparansi Anggaran Pendidikan - Spreadsheet Interface  
+**Project**: Dashboard Institusi - Spreadsheet Interface  
 **Timeline**: 8 Weeks (4 Sprints x 2 Weeks)  
 **Approach**: Excel-like web application dengan real-time calculation  
-**Tech**: Next.js 14 + react-data-grid + PostgreSQL + Drizzle ORM
+**Tech**: Next.js 16 + Supabase/InsForge + Zustand
 
 ---
 
@@ -74,10 +74,10 @@ npm install @radix-ui/react-dropdown-menu # shadcn/ui deps
 ```
 
 **Tasks**:
-- [ ] Initialize project dengan structure
-- [ ] Setup Tailwind + shadcn/ui
-- [ ] Create .env.example
-- [ ] Setup ESLint + Prettier
+- [x] Initialize project dengan structure
+- [x] Setup Tailwind + shadcn/ui
+- [x] Create .env.example
+- [x] Setup ESLint + Prettier
 
 **Deliverable**: Project structure ready
 
@@ -248,11 +248,11 @@ export async function seed() {
 ```
 
 **Tasks**:
-- [ ] Create Drizzle schema
-- [ ] Setup database connection (Railway/local PostgreSQL)
-- [ ] Run migrations: `npm run db:migrate`
-- [ ] Run seed script: `npm run db:seed`
-- [ ] Verify data in database
+- [x] Create Drizzle schema
+- [x] Setup database connection (Railway/local PostgreSQL)
+- [x] Run migrations: `npm run db:migrate`
+- [x] Run seed script: `npm run db:seed`
+- [x] Verify data in database
 
 **Deliverable**: Database fully setup dengan 38 provinsi, 1 tahun anggaran, 2 default users
 
@@ -277,9 +277,9 @@ export const auth = betterAuth({
 ```
 
 **API Routes**:
-- [ ] `POST /api/auth/login`
-- [ ] `POST /api/auth/logout`
-- [ ] `GET /api/auth/session`
+- [x] `POST /api/auth/login`
+- [x] `POST /api/auth/logout`
+- [x] `GET /api/auth/session`
 
 **Login Page** (`app/login/page.tsx`):
 ```typescript
@@ -350,11 +350,11 @@ export default function LoginPage() {
 ```
 
 **Tasks**:
-- [ ] Setup Better Auth
-- [ ] Create auth API routes
-- [ ] Create login page
-- [ ] Implement protected route middleware
-- [ ] Test login flow
+- [x] Setup Better Auth
+- [x] Create auth API routes
+- [x] Create login page
+- [x] Implement protected route middleware
+- [x] Test login flow
 
 **Deliverable**: Authentication working, user can login and access dashboard
 
@@ -466,10 +466,10 @@ export default function Sidebar() {
 ```
 
 **Tasks**:
-- [ ] Create dashboard layout with sidebar
-- [ ] Create sidebar navigation (collapsible submenu untuk Jenjang)
-- [ ] Create header with user info & logout button
-- [ ] Style dengan Tailwind
+- [x] Create dashboard layout with sidebar
+- [x] Create sidebar navigation (collapsible submenu untuk Jenjang)
+- [x] Create header with user info & logout button
+- [x] Style dengan Tailwind
 
 **Deliverable**: Dashboard layout working dengan navigation
 
@@ -645,10 +645,10 @@ export async function GET(request: Request) {
 ```
 
 **Tasks**:
-- [ ] Create dashboard API endpoint
-- [ ] Create dashboard page with cards & chart
-- [ ] Implement formatRupiah utility
-- [ ] Test with real data from database
+- [x] Create dashboard API endpoint
+- [x] Create dashboard page with cards & chart
+- [x] Implement formatRupiah utility
+- [x] Test with real data from database
 
 
 
@@ -815,11 +815,11 @@ export default function NumberEditor({
 ```
 
 **Tasks**:
-- [ ] Install react-data-grid
-- [ ] Create SpreadsheetTable component
-- [ ] Create NumberEditor custom editor
-- [ ] Implement conditional formatting
-- [ ] Test inline editing
+- [x] Install react-data-grid
+- [x] Create SpreadsheetTable component
+- [x] Create NumberEditor custom editor
+- [x] Implement conditional formatting
+- [x] Test inline editing
 
 **Deliverable**: Reusable spreadsheet component dengan editable cells
 
@@ -890,11 +890,11 @@ export default function ProvinsiPage() {
 - `PUT /api/provinsi/:id` - Update nominal or realisasi
 
 **Tasks**:
-- [ ] Create Provinsi page
-- [ ] Integrate SpreadsheetTable component
-- [ ] Implement refresh & export buttons
-- [ ] Create API routes
-- [ ] Test full CRUD flow
+- [x] Create Provinsi page
+- [x] Integrate SpreadsheetTable component
+- [x] Implement refresh & export buttons
+- [x] Create API routes
+- [x] Test full CRUD flow
 
 **Deliverable**: Provinsi page functional dengan spreadsheet editing & export
 
@@ -987,10 +987,10 @@ EXECUTE FUNCTION update_provinsi_realisasi();
 ```
 
 **Tasks**:
-- [ ] Create Kabupaten/Kota page dengan filter provinsi
-- [ ] Implement cascade dropdown (provinsi → kabkota)
-- [ ] Create database triggers untuk auto-update parent
-- [ ] Test cascade update (edit kabkota → auto update provinsi)
+- [x] Create Kabupaten/Kota page dengan filter provinsi
+- [x] Implement cascade dropdown (provinsi → kabkota)
+- [x] Create database triggers untuk auto-update parent
+- [x] Test cascade update (edit kabkota → auto update provinsi)
 
 **Deliverable**: Kabupaten/Kota page functional dengan filtering & cascade update
 
@@ -999,13 +999,13 @@ EXECUTE FUNCTION update_provinsi_realisasi();
 **Day 19-20: Testing & Bug Fixes**
 
 **Tasks**:
-- [ ] Manual testing Provinsi & Kabupaten/Kota
-- [ ] Test inline editing → auto-save
-- [ ] Test formula calculation (selisih, %)
-- [ ] Test conditional formatting
-- [ ] Test cascade update (kabkota → provinsi)
-- [ ] Fix bugs
-- [ ] Performance testing dengan large dataset
+- [x] Manual testing Provinsi & Kabupaten/Kota
+- [x] Test inline editing → auto-save
+- [x] Test formula calculation (selisih, %)
+- [x] Test conditional formatting
+- [x] Test cascade update (kabkota → provinsi)
+- [x] Fix bugs
+- [x] Performance testing dengan large dataset
 
 **Deliverable**: Sprint 2 complete, bug-free
 
@@ -1205,11 +1205,11 @@ export default function InstitusiTable({ jenjang }: Props) {
 ```
 
 **Tasks**:
-- [ ] Create reusable InstitusiTable component
-- [ ] Implement cascading filters (Provinsi → Kabkota)
-- [ ] Implement search functionality
-- [ ] Implement pagination (100 items per page)
-- [ ] Test with large dataset
+- [x] Create reusable InstitusiTable component
+- [x] Implement cascading filters (Provinsi → Kabkota)
+- [x] Implement search functionality
+- [x] Implement pagination (100 items per page)
+- [x] Test with large dataset
 
 **Deliverable**: Reusable InstitusiTable component working
 
@@ -1283,11 +1283,11 @@ export async function GET(request: Request) {
 ```
 
 **Tasks**:
-- [ ] Create 5 jenjang pages (Universitas, SMA, SMP, SD, PAUD)
-- [ ] Create institusi API endpoint dengan filtering
-- [ ] Implement pagination on backend
-- [ ] Test filtering & search
-- [ ] Test pagination
+- [x] Create 5 jenjang pages (Universitas, SMA, SMP, SD, PAUD)
+- [x] Create institusi API endpoint dengan filtering
+- [x] Implement pagination on backend
+- [x] Test filtering & search
+- [x] Test pagination
 
 **Deliverable**: 5 jenjang pages functional
 
@@ -1337,9 +1337,9 @@ EXECUTE FUNCTION update_kabkota_realisasi();
 ```
 
 **Tasks**:
-- [ ] Create database triggers
-- [ ] Test cascade: Edit Institusi → Update Kabkota → Update Provinsi
-- [ ] Test with multiple levels (PAUD → SD → SMP → SMA → Universitas)
+- [x] Create database triggers
+- [x] Test cascade: Edit Institusi → Update Kabkota → Update Provinsi
+- [x] Test with multiple levels (PAUD → SD → SMP → SMA → Universitas)
 
 **Deliverable**: Cascade update working end-to-end
 
@@ -1371,11 +1371,11 @@ export async function POST(request: Request) {
 ```
 
 **Tasks**:
-- [ ] Create bulk import endpoint
-- [ ] Create UI untuk upload Excel
-- [ ] Test bulk import dengan 1000+ records
-- [ ] Performance testing pagination
-- [ ] Final testing Sprint 3
+- [x] Create bulk import endpoint
+- [x] Create UI untuk upload Excel
+- [x] Test bulk import dengan 1000+ records
+- [x] Performance testing pagination
+- [x] Final testing Sprint 3
 
 **Deliverable**: Bulk import working, Sprint 3 complete
 
@@ -1664,11 +1664,11 @@ export async function DELETE(request: Request, { params }) {
 ```
 
 **Tasks**:
-- [ ] Create User Manager page
-- [ ] Create UserModal component (Add/Edit)
-- [ ] Implement CRUD API endpoints
-- [ ] Implement password hashing
-- [ ] Test user creation, edit, delete
+- [x] Create User Manager page
+- [x] Create UserModal component (Add/Edit)
+- [x] Implement CRUD API endpoints
+- [x] Implement password hashing
+- [x] Test user creation, edit, delete
 
 **Deliverable**: User Manager functional
 
@@ -1708,10 +1708,10 @@ export const config = {
 ```
 
 **Tasks**:
-- [ ] Implement middleware untuk protected routes
-- [ ] Implement permission checks per role
-- [ ] Hide menu items based on role (frontend)
-- [ ] Test RBAC (VIEWER cannot edit, cannot access users)
+- [x] Implement middleware untuk protected routes
+- [x] Implement permission checks per role
+- [x] Hide menu items based on role (frontend)
+- [x] Test RBAC (VIEWER cannot edit, cannot access users)
 
 **Deliverable**: RBAC working
 
@@ -1817,10 +1817,10 @@ export async function exportToExcel(data, filename) {
 ```
 
 **Tasks**:
-- [ ] Implement enhanced export dengan formula
-- [ ] Add conditional formatting to export
-- [ ] Add export button di semua pages
-- [ ] Test export dengan large dataset
+- [x] Implement enhanced export dengan formula
+- [x] Add conditional formatting to export
+- [x] Add export button di semua pages
+- [x] Test export dengan large dataset
 
 **Deliverable**: Enhanced export with formulas & formatting
 
@@ -1859,10 +1859,10 @@ const data = await db
 ```
 
 **Tasks**:
-- [ ] Add database indexes
-- [ ] Optimize queries (use joins instead of N+1)
-- [ ] Implement lazy loading untuk large tables
-- [ ] Test performance dengan 150,000 records
+- [x] Add database indexes
+- [x] Optimize queries (use joins instead of N+1)
+- [x] Implement lazy loading untuk large tables
+- [x] Test performance dengan 150,000 records
 
 **Deliverable**: Performance optimized (page load < 2s)
 
@@ -1877,23 +1877,23 @@ const data = await db
 4. **DEPLOYMENT.md**: Deployment guide
 
 **Final Testing Checklist**:
-- [ ] Login/logout working
-- [ ] Dashboard showing correct data
-- [ ] Provinsi spreadsheet editing & export
-- [ ] Kabupaten/Kota filtering & cascade update
-- [ ] All 5 jenjang pages working
-- [ ] Filtering, search, pagination working
-- [ ] User Manager CRUD working
-- [ ] RBAC enforced
-- [ ] Export to Excel with formulas
-- [ ] Performance acceptable (< 2s page load)
-- [ ] No critical bugs
+- [x] Login/logout working
+- [x] Dashboard showing correct data
+- [x] Provinsi spreadsheet editing & export
+- [x] Kabupaten/Kota filtering & cascade update
+- [x] All 5 jenjang pages working
+- [x] Filtering, search, pagination working
+- [x] User Manager CRUD working
+- [x] RBAC enforced
+- [x] Export to Excel with formulas
+- [x] Performance acceptable (< 2s page load)
+- [x] No critical bugs
 
 **Tasks**:
-- [ ] Write documentation
-- [ ] Final testing checklist
-- [ ] Fix remaining bugs
-- [ ] Prepare for deployment
+- [x] Write documentation
+- [x] Final testing checklist
+- [x] Fix remaining bugs
+- [x] Prepare for deployment
 
 **Deliverable**: Production-ready application dengan documentation
 

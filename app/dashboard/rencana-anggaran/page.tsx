@@ -13,6 +13,7 @@ import {
 import Tesseract from 'tesseract.js';
 import { parseReceiptText } from '@/lib/utils/ocrParser';
 import Link from 'next/link';
+import DiskusiRAB from '@/components/DiskusiRAB';
 
 interface TransaksiGlobal {
   id: string;
@@ -685,6 +686,9 @@ export default function RencanaAnggaranPage() {
             </table>
           </div>
         </div>
+
+        {/* ===== DISKUSI RAB SECTION ===== */}
+        <DiskusiRAB />
 
         {/* ===== MODAL 1: DETAIL SCAN STRUK & AI STATUS ===== */}
         {detailModalOpen && selectedTransaksi && (

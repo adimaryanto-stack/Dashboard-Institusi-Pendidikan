@@ -178,3 +178,19 @@ CREATE POLICY "Allow public insert access" ON public.pengeluaran_bulanan_institu
 CREATE POLICY "Allow public insert access" ON public.rincian_pengeluaran_item FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public insert access" ON public.users FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public insert access" ON public.audit_anomaly FOR INSERT WITH CHECK (true);
+
+-- 12. Tabel Diskusi RAB (Rencana Anggaran Belanja)
+CREATE TABLE IF NOT EXISTS public.diskusi_rab (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    nama_pengirim TEXT NOT NULL DEFAULT 'Warga Anonim',
+    pesan TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.diskusi_rab ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read access" ON public.diskusi_rab FOR SELECT USING (true);
+CREATE POLICY "Allow public insert access" ON public.diskusi_rab FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public delete access" ON public.diskusi_rab FOR DELETE USING (true);
+
+-- Enable Realtime for diskusi_rab
+ALTER PUBLICATION supabase_realtime ADD TABLE public.diskusi_rab;

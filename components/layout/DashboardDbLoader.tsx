@@ -157,9 +157,26 @@ export default function DashboardDbLoader({
         });
         setTransaksiList(mappedTx);
 
+        // Enrich alokasi_provinsi with province details for components that need it
+        const enrichedAlokasiProvinsi = (loadedDb.alokasi_provinsi || []).map((ap: any) => {
+          const prov = (loadedDb.provinsi || []).find((p: any) => p.id === ap.provinsi_id);
+          return {
+            ...ap,
+            nominal_alokasi: Number(ap.nominal_alokasi),
+            realisasi_total: Number(ap.realisasi_total),
+            selisih: Number(ap.selisih),
+            persentase_penyerapan: Number(ap.persentase_penyerapan),
+            provinsi: prov || {
+              id: ap.provinsi_id,
+              kode_provinsi: '',
+              nama_provinsi: 'Provinsi Tidak Dikenal'
+            }
+          };
+        });
+
         // Sync local memory let variables in lib/data
         updateTahunAnggaranData(loadedDb.tahun_anggaran);
-        updateAlokasiProvinsiData(loadedDb.alokasi_provinsi);
+        updateAlokasiProvinsiData(enrichedAlokasiProvinsi);
         updateUsersData(loadedDb.users);
         updateMockAnomalies(loadedDb.audit_anomaly);
 
