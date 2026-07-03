@@ -16,7 +16,7 @@ export default function KabkotaDetailPage() {
   const router = useRouter();
   const id = params.id as string; // provinsi_id e.g. p-1
   const kabkotaId = params.kabkotaId as string; // kabupaten_kota_id e.g. k-p-1-0
-  const { activeTahun } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode } = useAppStore();
 
   // Find target province & kabkota data scaled dynamically
   const provData = useMemo(() => {
@@ -39,7 +39,7 @@ export default function KabkotaDetailPage() {
       selisih: nominal - realisasi,
       persentase_penyerapan: nominal > 0 ? (realisasi / nominal) * 100 : 0,
     };
-  }, [id, activeTahun]);
+  }, [id, activeTahun, dbData, isSupabaseMode]);
 
   const kabkotaData = useMemo(() => {
     const baseData = getKabkotaByProvinsi(id).find(k => k.kabupaten_kota_id === kabkotaId);
@@ -61,7 +61,7 @@ export default function KabkotaDetailPage() {
       selisih: nominal - realisasi,
       persentase_penyerapan: nominal > 0 ? Math.round((realisasi / nominal) * 1000) / 10 : 0
     };
-  }, [id, kabkotaId, activeTahun]);
+  }, [id, kabkotaId, activeTahun, dbData, isSupabaseMode]);
 
   const scaledSchoolList = useMemo(() => {
     if (!kabkotaData || !provData) return [];
@@ -71,7 +71,7 @@ export default function KabkotaDetailPage() {
       provData.provinsi.nama_provinsi,
       kabkotaData.nominal_alokasi
     );
-  }, [kabkotaId, kabkotaData, provData]);
+  }, [kabkotaId, kabkotaData, provData, dbData, isSupabaseMode]);
 
   // States
   const [schoolList, setSchoolList] = useState<InstitusiPendidikan[]>(scaledSchoolList);

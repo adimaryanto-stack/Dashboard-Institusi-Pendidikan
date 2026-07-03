@@ -64,7 +64,6 @@ CREATE TABLE IF NOT EXISTS public.institusi_pendidikan (
     status_sekolah TEXT CHECK (status_sekolah IN ('NEGERI', 'SWASTA')) NOT NULL,
     nomor_rekening TEXT,
     alamat TEXT,
-    nisn TEXT,
     nominal_alokasi BIGINT NOT NULL,
     realisasi_total BIGINT NOT NULL,
     selisih BIGINT NOT NULL,

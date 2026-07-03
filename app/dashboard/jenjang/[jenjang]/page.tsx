@@ -23,7 +23,7 @@ export default function JenjangPage() {
   const params = useParams();
   const slug = params.jenjang as string;
   const config = jenjangLabels[slug] || jenjangLabels.universitas;
-  const { activeTahun } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode } = useAppStore();
 
   const rawData = useMemo(() => {
     const list = getInstitusiByJenjang(config.jenjang);
@@ -44,7 +44,7 @@ export default function JenjangPage() {
         persentase_penyerapan: nominal > 0 ? Math.round((realisasi / nominal) * 1000) / 10 : 0
       };
     });
-  }, [config.jenjang, activeTahun]);
+  }, [config.jenjang, activeTahun, dbData, isSupabaseMode]);
 
   const [data, setData] = useState<InstitusiPendidikan[]>(rawData);
 

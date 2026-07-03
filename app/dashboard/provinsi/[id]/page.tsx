@@ -15,7 +15,7 @@ export default function ProvinsiDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string; // provinsi_id e.g. p-1
-  const { activeTahun } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode } = useAppStore();
 
   // Find target province data scaled dynamically
   const provData = useMemo(() => {
@@ -38,7 +38,7 @@ export default function ProvinsiDetailPage() {
       selisih: nominal - realisasi,
       persentase_penyerapan: nominal > 0 ? (realisasi / nominal) * 100 : 0,
     };
-  }, [id, activeTahun]);
+  }, [id, activeTahun, dbData, isSupabaseMode]);
 
   // Scaled Kabkota list
   const scaledKabkotaList = useMemo(() => {
@@ -60,7 +60,7 @@ export default function ProvinsiDetailPage() {
         persentase_penyerapan: nominal > 0 ? Math.round((realisasi / nominal) * 1000) / 10 : 0
       };
     });
-  }, [id, activeTahun]);
+  }, [id, activeTahun, dbData, isSupabaseMode]);
 
   // States
   const [kabkotaList, setKabkotaList] = useState<AlokasiKabupatenKota[]>(scaledKabkotaList);

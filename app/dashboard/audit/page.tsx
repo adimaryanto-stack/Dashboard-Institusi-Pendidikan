@@ -77,8 +77,14 @@ interface ChatMessage {
 }
 
 export default function AuditPage() {
-  const [anomalies, setAnomalies] = useState<AuditAnomaly[]>(mockAnomalies.filter(a => a.institusi_id === 'inst-sd-0'));
+  const { dbData, isSupabaseMode, activeTahun } = useAppStore();
+  const [anomalies, setAnomalies] = useState<AuditAnomaly[]>([]);
   const [selectedInst, setSelectedInst] = useState('inst-sd-0');
+
+  useEffect(() => {
+    setAnomalies(mockAnomalies.filter(a => a.institusi_id === selectedInst));
+  }, [selectedInst, dbData, isSupabaseMode]);
+
   const [scanStatus, setScanStatus] = useState<'IDLE' | 'SCANNING' | 'DONE'>('IDLE');
   const [scanProgress, setScanProgress] = useState(0);
   const [scanMessage, setScanMessage] = useState('');
@@ -150,7 +156,7 @@ export default function AuditPage() {
     setActiveReport(null);
     
     const messages = [
-      'Menghubungkan ke InsForge AI Gateway...',
+      'Menghubungkan ke Gemini AI Gateway...',
       'Membaca histori sumber dana & alokasi bank...',
       'Memindai dokumen kuitansi & nota belanja bulanan...',
       'Mengevaluasi kepatuhan PPN (11%) & PPh...',

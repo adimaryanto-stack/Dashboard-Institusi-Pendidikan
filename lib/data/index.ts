@@ -404,7 +404,6 @@ function generateInstitusi(names: string[], jenjang: Jenjang, baseNominal: numbe
       status_sekolah: (i % 3 === 0 || nama.includes('Al-Ikhlas') || nama.includes('Bina') || nama.includes('Pelita')) ? 'SWASTA' : 'NEGERI',
       nomor_rekening: `${123 + i}.${456 + i * 3}.${789 + i * 7}.000`,
       alamat: `Jl. Pendidikan Raya No. ${i + 15}, ${kabName}, Jawa Barat`,
-      nisn: `889${String(100000 + i)}`,
       nominal_alokasi: Math.round(nominal),
       realisasi_total: realisasi,
       selisih: Math.round(nominal) - realisasi,
@@ -437,14 +436,15 @@ export function updateUsersData(newData: User[]) {
 }
 
 export let usersData: User[] = [
-  { id: 'u1', username: 'superadmin', email: 'admin@institusi.go.id', role: 'SUPER_ADMIN', is_active: true, created_at: '2024-01-01' },
-  { id: 'u2', username: 'ahmad.fauzi', email: 'a.fauzi@institusi.go.id', role: 'ADMIN', is_active: true, created_at: '2024-02-15' },
-  { id: 'u3', username: 'sari.dewi', email: 's.dewi@jabar.go.id', role: 'ADMIN_PROVINSI', provinsi_id: 'p-12', is_active: true, created_at: '2024-03-10' },
-  { id: 'u4', username: 'budi.santoso', email: 'b.santoso@bandung.go.id', role: 'ADMIN_KABKOTA', kabupaten_kota_id: 'k-p-12-3', is_active: true, created_at: '2024-04-20' },
-  { id: 'u5', username: 'viewer.nasional', email: 'viewer@institusi.go.id', role: 'VIEWER', is_active: true, created_at: '2024-05-01' },
-  { id: 'u6', username: 'auditor.bpk', email: 'audit@bpk.go.id', role: 'AUDITOR', is_active: true, created_at: '2024-06-01' },
-  { id: 'u7', username: 'rina.wulan', email: 'r.wulan@jatim.go.id', role: 'ADMIN_PROVINSI', provinsi_id: 'p-15', is_active: true, created_at: '2024-07-01' },
-  { id: 'u8', username: 'doni.pratama', email: 'd.pratama@institusi.go.id', role: 'ADMIN', is_active: false, created_at: '2024-01-15' },
+  {
+    id: 'u-sdn01menteng',
+    username: 'admin.sd01menteng',
+    email: 'admin@sdn01menteng.sch.id',
+    role: 'ADMIN',
+    is_active: true,
+    created_at: '2026-07-03',
+    institusi_id: 'inst-sd-0'
+  }
 ];
 
 // === DASHBOARD SUMMARY ===
@@ -1282,7 +1282,6 @@ export function getInstitusiByKabkota(
         status_sekolah,
         nomor_rekening: `100.${200 + schoolCounter}.${300 + schoolCounter * 3}.000`,
         alamat: `Jl. Raya ${namaKabkota} No. ${schoolCounter + 12}, ${provinsiNama}`,
-        nisn: `889${String(200000 + schoolCounter)}`,
         nominal_alokasi: schoolNominal,
         realisasi_total: realisasi,
         selisih: schoolNominal - realisasi,

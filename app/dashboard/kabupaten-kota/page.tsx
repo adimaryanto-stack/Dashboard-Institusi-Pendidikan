@@ -11,7 +11,7 @@ import { AlokasiKabupatenKota } from '@/types';
 import { Search, Download } from 'lucide-react';
 
 export default function KabupatenKotaPage() {
-  const { activeTahun } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode } = useAppStore();
   const [selectedProvinsi, setSelectedProvinsi] = useState(alokasiProvinsiData[11].provinsi_id); // Jawa Barat
   const [search, setSearch] = useState('');
 
@@ -34,7 +34,7 @@ export default function KabupatenKotaPage() {
         persentase_penyerapan: nominal > 0 ? Math.round((realisasi / nominal) * 1000) / 10 : 0
       };
     });
-  }, [selectedProvinsi, activeTahun]);
+  }, [selectedProvinsi, activeTahun, dbData, isSupabaseMode]);
 
   const [localData, setLocalData] = useState<AlokasiKabupatenKota[]>(rawData);
 

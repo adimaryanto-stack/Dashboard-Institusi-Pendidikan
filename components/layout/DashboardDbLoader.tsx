@@ -23,7 +23,8 @@ export default function DashboardDbLoader({
     setDbData,
     isLoadingDb,
     setIsLoadingDb,
-    setTransaksiList
+    setTransaksiList,
+    setNotifications
   } = useAppStore();
 
   const [loaderText, setLoaderText] = useState('Menginisialisasi dasbor...');
@@ -179,6 +180,35 @@ export default function DashboardDbLoader({
         updateAlokasiProvinsiData(enrichedAlokasiProvinsi);
         updateUsersData(loadedDb.users);
         updateMockAnomalies(loadedDb.audit_anomaly);
+
+        // Generate notifications from anomalies dynamically
+        const activeAnoms = loadedDb.audit_anomaly || [];
+        const mappedNotifications = activeAnoms.map((anom: any, idx: number) => {
+          let nType: 'info' | 'success' | 'warning' | 'error' = 'info';
+          if (anom.severity === 'HIGH') nType = 'warning';
+          else if (anom.severity === 'MEDIUM') nType = 'info';
+          else if (anom.severity === 'LOW') nType = 'success';
+          return {
+            id: `n-anom-${anom.id}`,
+            message: `Peringatan Audit: Terdeteksi ${anom.tipe_anomali} di ${anom.nama_institusi || 'Institusi'} (${anom.bulan || '2026'})`,
+            time: `${idx + 1} jam yang lalu`,
+            unread: anom.status !== 'SELESAI',
+            type: nType,
+            link: `/dashboard/profil-institusi/${anom.institusi_id}`
+          };
+        });
+        
+        if (mappedNotifications.length === 0) {
+          mappedNotifications.push({
+            id: 'n-system-ready',
+            message: 'Semua sistem terhubung dengan Supabase dan berjalan normal.',
+            time: 'Baru saja',
+            unread: false,
+            type: 'success',
+            link: '/dashboard'
+          });
+        }
+        setNotifications(mappedNotifications);
 
         console.log('[Supabase Loader] Synced all tables from Supabase successfully.');
       } catch (err: any) {

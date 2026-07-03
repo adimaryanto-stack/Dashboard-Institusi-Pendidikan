@@ -56,6 +56,7 @@ interface AppState {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   markAllAsUnread: () => void;
+  setNotifications: (list: NotificationItem[]) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -107,32 +108,8 @@ export const useAppStore = create<AppState>((set) => ({
   })),
 
   // Notification initial states
-  notifications: [
-    {
-      id: 'n1',
-      message: 'Anggaran APBN 2026 Provinsi Aceh berhasil dialokasikan.',
-      time: '20 menit yang lalu',
-      unread: true,
-      type: 'success',
-      link: '/dashboard/provinsi/prov-1',
-    },
-    {
-      id: 'n2',
-      message: 'Realisasi Universitas Indonesia bulan Januari telah disinkronkan.',
-      time: '1 jam yang lalu',
-      unread: true,
-      type: 'info',
-      link: '/dashboard/profil-institusi/inst-universitas-0',
-    },
-    {
-      id: 'n3',
-      message: 'Peringatan: Penyerapan Kabupaten Ogan Komering Ulu di bawah 50%.',
-      time: '3 jam yang lalu',
-      unread: true,
-      type: 'warning',
-      link: '/dashboard/provinsi/prov-6/kabkota/kab-p-6-0',
-    },
-  ],
+  notifications: [],
+  setNotifications: (list) => set({ notifications: list }),
   addNotification: (n) => set((state) => ({
     notifications: [
       {

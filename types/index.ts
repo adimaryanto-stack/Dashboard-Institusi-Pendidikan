@@ -72,7 +72,6 @@ export interface InstitusiPendidikan {
   status_sekolah: 'NEGERI' | 'SWASTA';
   nomor_rekening?: string;
   alamat?: string;
-  nisn?: string;
   nominal_alokasi: number;
   realisasi_total: number;
   selisih: number;
@@ -135,6 +134,7 @@ export interface User {
   role: UserRole;
   provinsi_id?: string;
   kabupaten_kota_id?: string;
+  institusi_id?: string;
   is_active: boolean;
   created_at: string;
 }

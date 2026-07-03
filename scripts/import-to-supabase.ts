@@ -160,7 +160,6 @@ async function main() {
           status_sekolah: school.status_sekolah,
           nomor_rekening: school.nomor_rekening || null,
           alamat: school.alamat || null,
-          nisn: school.nisn || null,
           nominal_alokasi: school.nominal_alokasi,
           realisasi_total: school.realisasi_total,
           selisih: school.selisih,
@@ -243,6 +242,7 @@ async function main() {
       role: u.role,
       provinsi_id: u.provinsi_id || null,
       kabupaten_kota_id: u.kabupaten_kota_id || null,
+      institusi_id: u.institusi_id || null,
       is_active: u.is_active,
       created_at: u.created_at
     }));

@@ -8,7 +8,7 @@ import {
   GraduationCap, Users, ChevronDown, ChevronRight,
   Menu, X, Landmark, School, ShieldCheck, CreditCard, ClipboardList
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 const jenjangItems = [
   { label: 'Universitas', href: '/dashboard/jenjang/universitas' },
@@ -20,8 +20,18 @@ const jenjangItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, toggleSidebar } = useAppStore();
+  const { sidebarOpen, toggleSidebar, dbData, isSupabaseMode } = useAppStore();
   const [jenjangOpen, setJenjangOpen] = useState(pathname.includes('/jenjang'));
+
+  const activeUser = useMemo(() => {
+    if (isSupabaseMode && dbData?.users && dbData.users.length > 0) {
+      return dbData.users[0];
+    }
+    return {
+      username: 'admin.sd01menteng',
+      email: 'admin@sdn01menteng.sch.id'
+    };
+  }, [dbData, isSupabaseMode]);
 
   const isActive = (href: string) => pathname === href;
   const isJenjangActive = pathname.includes('/jenjang');
@@ -74,6 +84,11 @@ export default function Sidebar() {
             <span>Profil Institusi</span>
           </Link>
 
+          <Link href="/dashboard/mutasi-rekening" className={`sidebar-item ${pathname.includes('/mutasi-rekening') ? 'active' : ''}`}>
+            <Landmark size={18} />
+            <span>Mutasi rekening</span>
+          </Link>
+
           <Link href="/dashboard/rencana-anggaran" className={`sidebar-item ${pathname.includes('/rencana-anggaran') ? 'active' : ''}`}>
             <ClipboardList size={18} />
             <span>Rencana (RAB)</span>
@@ -98,12 +113,12 @@ export default function Sidebar() {
         {/* Footer */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xs font-bold text-white">
-              SA
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] font-extrabold text-white">
+              {activeUser.username.substring(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-text-primary truncate">Super Admin</p>
-              <p className="text-[10px] text-text-muted truncate">admin@institusi.go.id</p>
+              <p className="text-xs font-semibold text-text-primary truncate">{activeUser.username}</p>
+              <p className="text-[10px] text-text-muted truncate">{activeUser.email}</p>
             </div>
           </div>
         </div>

@@ -57,9 +57,9 @@ export default function ProfilInstitusiDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { activeTahun, addNotification, transaksiList, setTransaksiList } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode, addNotification, transaksiList, setTransaksiList } = useAppStore();
 
-  const profilData = useMemo(() => getProfilInstitusi(id, activeTahun), [id, activeTahun]);
+  const profilData = useMemo(() => getProfilInstitusi(id, activeTahun), [id, activeTahun, dbData, isSupabaseMode, transaksiList]);
 
   // Tab State: 'ringkasan' | 'transaksi' | 'analitik' | 'audit'
   const [activeTab, setActiveTab] = useState<'ringkasan' | 'transaksi' | 'analitik' | 'audit'>('ringkasan');
@@ -296,16 +296,21 @@ export default function ProfilInstitusiDetailPage() {
   const totalSaldoDiBank = sumberDana.reduce((s, d) => s + d.saldo_di_bank, 0);
   const saldoSurplusDefisit = totalNominalSumber - totalRealisasiSumber;
 
+  // Filter transactions for this specific school
+  const schoolTransactions = useMemo(() => {
+    return transaksiList.filter(t => t.institusiId === id);
+  }, [transaksiList, id]);
+
   // Total pengeluaran dinamis dijumlah dari:
   // - Pengeluaran bulanan bawaan
   // - Ditambah pengeluaran dari transaksiList yang baru ditambahkan secara manual
   const totalPengeluaran = useMemo(() => {
     const defaultPb = pengeluaran.reduce((s, p) => s + p.sub_total, 0);
-    const manualTotal = transaksiList
+    const manualTotal = schoolTransactions
       .filter(t => t.id.startsWith('tr-manual-'))
       .reduce((s, t) => s + t.nominal, 0);
     return defaultPb + manualTotal;
-  }, [pengeluaran, transaksiList]);
+  }, [pengeluaran, schoolTransactions]);
 
   // ===== Dynamic Academic KPIs (Value for Money) =====
   const studentCount = useMemo(() => {
@@ -351,9 +356,9 @@ export default function ProfilInstitusiDetailPage() {
 
   // ===== Category Filtered Transaksi (VERCEL-STYLE 1) =====
   const filteredTransaksi = useMemo(() => {
-    if (selectedCategoryFilter === 'Semua') return transaksiList;
-    return transaksiList.filter(t => t.kategori === selectedCategoryFilter);
-  }, [transaksiList, selectedCategoryFilter]);
+    if (selectedCategoryFilter === 'Semua') return schoolTransactions;
+    return schoolTransactions.filter(t => t.kategori === selectedCategoryFilter);
+  }, [schoolTransactions, selectedCategoryFilter]);
 
   // ===== Dynamic badge for transaction status =====
   const getStrukStatusBadge = (status: TransaksiItem['strukStatus']) => {
@@ -911,12 +916,9 @@ export default function ProfilInstitusiDetailPage() {
                 <span className="text-text-muted">NPSN:</span>
                 <span className="font-semibold text-text-primary font-mono">{institusi.npsn || '—'}</span>
               </div>
+
               <div className="flex justify-between border-b border-slate-100 pb-1">
-                <span className="text-text-muted">NISN Institusi:</span>
-                <span className="font-semibold text-text-primary font-mono">{institusi.nisn || '—'}</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-100 pb-1">
-                <span className="text-text-muted">No. Rekening Bank Himbara:</span>
+                <span className="text-text-muted">No. Rekening Bank BRI:</span>
                 <span className="font-semibold text-text-primary font-mono">{nomorRekening || '—'}</span>
               </div>
               <div className="pt-1">
@@ -962,7 +964,7 @@ export default function ProfilInstitusiDetailPage() {
             </p>
             <div className="mt-4 pt-3 border-t border-slate-100/50 flex justify-between items-center text-xs">
               <span className="text-text-muted">Total Transaksi:</span>
-              <span className="font-bold text-text-primary">{transaksiList.length} Item Pengeluaran</span>
+              <span className="font-bold text-text-primary">{schoolTransactions.length} Item Pengeluaran</span>
             </div>
           </div>
         </div>
@@ -2044,7 +2046,7 @@ export default function ProfilInstitusiDetailPage() {
                   </div>
                   <div className="flex justify-between border-b border-slate-200 pb-2">
                     <span>Metode Pembayaran:</span>
-                    <span>Transfer Bank Himbara</span>
+                    <span>Transfer Bank BRI</span>
                   </div>
                 </div>
 

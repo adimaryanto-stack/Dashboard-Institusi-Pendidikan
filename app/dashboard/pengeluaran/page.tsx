@@ -32,8 +32,8 @@ interface TransaksiGlobal {
 }
 
 export default function PengeluaranPage() {
-  const allInstitusi = useMemo(() => getAllInstitusi(), []);
-  const { activeTahun, addNotification, transaksiList, setTransaksiList } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode, addNotification, transaksiList, setTransaksiList } = useAppStore();
+  const allInstitusi = useMemo(() => getAllInstitusi(), [dbData, isSupabaseMode]);
 
   // Dynamically scale transaction values based on selected activeTahun
   const transactionsWithActiveYear = useMemo(() => {
@@ -83,7 +83,7 @@ export default function PengeluaranPage() {
       }
     }
 
-    return scaledList;
+    return scaledList.filter(t => t.institusiId === 'inst-sd-0');
   }, [transaksiList, activeTahun]);
 
 

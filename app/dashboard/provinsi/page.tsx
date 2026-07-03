@@ -11,7 +11,7 @@ import { AlokasiProvinsi } from '@/types';
 import { Search, Download, RefreshCw } from 'lucide-react';
 
 export default function ProvinsiPage() {
-  const { activeTahun } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode } = useAppStore();
 
   const scaledProvinsiData = useMemo(() => {
     const targetTahun = tahunAnggaranData.find(t => t.tahun === activeTahun) || tahunAnggaranData[6];
@@ -31,7 +31,7 @@ export default function ProvinsiPage() {
         persentase_penyerapan: nominal > 0 ? (realisasi / nominal) * 100 : 0,
       };
     });
-  }, [activeTahun]);
+  }, [activeTahun, dbData, isSupabaseMode]);
 
   const [data, setData] = useState<AlokasiProvinsi[]>(scaledProvinsiData);
 

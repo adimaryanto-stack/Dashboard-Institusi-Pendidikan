@@ -33,8 +33,8 @@ interface TransaksiGlobal {
 }
 
 export default function RencanaAnggaranPage() {
-  const allInstitusi = useMemo(() => getAllInstitusi(), []);
-  const { activeTahun, addNotification, rencanaList, setRencanaList, addTransaksi, removeRencana } = useAppStore();
+  const { activeTahun, dbData, isSupabaseMode, addNotification, rencanaList, setRencanaList, addTransaksi, removeRencana } = useAppStore();
+  const allInstitusi = useMemo(() => getAllInstitusi(), [dbData, isSupabaseMode]);
 
   const transactionsWithActiveYear = useMemo(() => {
     return rencanaList.filter(t => t.tanggal.includes(activeTahun.toString()));

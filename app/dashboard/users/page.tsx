@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { usersData } from '@/lib/data';
 import { User, UserRole } from '@/types';
 import { Search, Plus, Edit3, Trash2, Shield, ShieldCheck, Eye, UserCheck, UserX } from 'lucide-react';
+import { useAppStore } from '@/lib/store';
+import { supabase } from '@/lib/supabase';
 
 const roleConfig: Record<UserRole, { label: string; color: string }> = {
   SUPER_ADMIN: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700 border-purple-300' },
@@ -16,10 +18,15 @@ const roleConfig: Record<UserRole, { label: string; color: string }> = {
 };
 
 export default function UsersPage() {
-  const [data, setData] = useState<User[]>(usersData);
+  const { dbData, isSupabaseMode, setDbData } = useAppStore();
+  const [data, setData] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setData(isSupabaseMode && dbData ? dbData.users : usersData);
+  }, [dbData, isSupabaseMode]);
 
   // Form state
   const [formUsername, setFormUsername] = useState('');
@@ -56,31 +63,77 @@ export default function UsersPage() {
     if (!formUsername || !formEmail) return;
 
     if (editUser) {
-      setData(prev => prev.map(u => u.id === editUser.id ? { ...u, username: formUsername, email: formEmail, role: formRole } : u));
+      const updatedUser = { ...editUser, username: formUsername, email: formEmail, role: formRole };
+      setData(prev => prev.map(u => u.id === editUser.id ? updatedUser : u));
+      if (isSupabaseMode && dbData) {
+        const updatedUsers = dbData.users.map((u: any) => u.id === editUser.id ? updatedUser : u);
+        setDbData({ ...dbData, users: updatedUsers });
+        supabase
+          .from('users')
+          .update({ username: formUsername, email: formEmail, role: formRole })
+          .eq('id', editUser.id)
+          .then(({ error }) => {
+            if (error) console.error('Failed to update user in Supabase:', error.message);
+          });
+      }
     } else {
-      setData(prev => [...prev, {
-        id: String(Date.now()),
+      const newUser: User = {
+        id: `u-manual-${Date.now()}`,
         username: formUsername,
         email: formEmail,
         role: formRole,
         is_active: true,
         created_at: new Date().toISOString(),
-      }]);
+        institusi_id: 'inst-sd-0'
+      };
+      setData(prev => [...prev, newUser]);
+      if (isSupabaseMode && dbData) {
+        setDbData({ ...dbData, users: [...dbData.users, newUser] });
+        supabase
+          .from('users')
+          .insert([newUser])
+          .then(({ error }) => {
+            if (error) console.error('Failed to insert user to Supabase:', error.message);
+          });
+      }
     }
     setShowModal(false);
   };
 
   const handleToggleActive = (id: string) => {
     const user = data.find(u => u.id === id);
-    if (user?.role === 'SUPER_ADMIN') return;
-    setData(prev => prev.map(u => u.id === id ? { ...u, is_active: !u.is_active } : u));
+    if (!user || user.role === 'SUPER_ADMIN') return;
+    const newActiveState = !user.is_active;
+    setData(prev => prev.map(u => u.id === id ? { ...u, is_active: newActiveState } : u));
+    if (isSupabaseMode && dbData) {
+      const updatedUsers = dbData.users.map((u: any) => u.id === id ? { ...u, is_active: newActiveState } : u);
+      setDbData({ ...dbData, users: updatedUsers });
+      supabase
+        .from('users')
+        .update({ is_active: newActiveState })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to toggle active user in Supabase:', error.message);
+        });
+    }
   };
 
   const handleDelete = (id: string) => {
     const user = data.find(u => u.id === id);
-    if (user?.role === 'SUPER_ADMIN') { alert('Super Admin tidak bisa dihapus!'); return; }
+    if (!user || user.role === 'SUPER_ADMIN') { alert('Super Admin tidak bisa dihapus!'); return; }
     if (!confirm('Hapus user ini?')) return;
-    setData(prev => prev.map(u => u.id === id ? { ...u, is_active: false } : u));
+    setData(prev => prev.filter(u => u.id !== id));
+    if (isSupabaseMode && dbData) {
+      const updatedUsers = dbData.users.filter((u: any) => u.id !== id);
+      setDbData({ ...dbData, users: updatedUsers });
+      supabase
+        .from('users')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to delete user in Supabase:', error.message);
+        });
+    }
   };
 
   const getInitials = (name: string) => {
@@ -136,6 +189,9 @@ export default function UsersPage() {
                         {getInitials(user.username)}
                       </div>
                       <span className="font-medium text-text-primary">{user.username}</span>
+                      {user.institusi_id === 'inst-sd-0' && (
+                        <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-medium ml-2">SDN 01 Menteng</span>
+                      )}
                     </div>
                   </td>
                   <td className="sheet-cell text-left text-text-secondary text-xs">{user.email}</td>
