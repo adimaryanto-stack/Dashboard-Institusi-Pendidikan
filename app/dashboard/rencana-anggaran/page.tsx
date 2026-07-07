@@ -563,6 +563,13 @@ export default function RencanaAnggaranPage() {
               </select>
             </div>
 
+            <Link
+              href="/dashboard/rencana-anggaran/paket-project"
+              className="btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/10 font-bold py-2 px-4 text-xs w-full lg:w-auto shrink-0 cursor-pointer flex items-center gap-1.5 rounded-xl transition-all"
+            >
+              <Plus size={14} />
+              Paket Project
+            </Link>
             <button
               onClick={handleOpenTambahModal}
               className="btn btn-primary shadow-lg shadow-indigo-500/10 font-bold py-2 px-4 text-xs w-full lg:w-auto shrink-0 cursor-pointer"

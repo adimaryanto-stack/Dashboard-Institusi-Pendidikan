@@ -72,13 +72,36 @@ export default function MutasiRekeningPage() {
 
   // Dynamically scale realized transaction values based on activeTahun (Debets)
   const debetTransactions = useMemo(() => {
+    if (isSupabaseMode) {
+      return transaksiList
+        .filter(t => t.institusiId === schoolId)
+        .map((t): MutationItem => ({
+          id: t.id,
+          tanggal: t.tanggal,
+          keterangan: `${t.item} (${t.vendorName})`,
+          tipe: 'Debet',
+          nominal: t.nominal,
+        }));
+    }
+
     const mentengData = MENTENG_YEAR_DATA[activeTahun] || MENTENG_YEAR_DATA[2026];
     const targetRealisasi = mentengData.realisasi;
+
+    // Separate project transactions
+    const projectTransactions = transaksiList.filter(t => t.institusiId === schoolId && t.id.includes('tr-proj'));
+    const totalProjectNominal = projectTransactions.reduce((sum, t) => sum + t.nominal, 0);
+
+    // Scale only the base non-project transactions
+    const baseTransactions = transaksiList.filter(t => t.institusiId === schoolId && !t.id.includes('tr-proj'));
     const baseRealisasi = 1_129_655_153;
-    const scaleFactor = targetRealisasi / baseRealisasi;
+    const targetBaseRealisasi = Math.max(0, targetRealisasi - totalProjectNominal);
+    const scaleFactor = baseRealisasi > 0 ? targetBaseRealisasi / baseRealisasi : 1;
 
     const scaledList = transaksiList.map((t) => {
       if (t.institusiId !== schoolId) return t;
+      if (t.id.includes('tr-proj')) {
+        return t;
+      }
 
       // Update date year
       let newTanggal = t.tanggal;
@@ -96,16 +119,16 @@ export default function MutasiRekeningPage() {
       };
     });
 
-    // Distribute any rounding error to the last SDN 01 Menteng transaction
-    const mentengTxIndices = scaledList
-      .map((t, idx) => (t.institusiId === schoolId ? idx : -1))
+    // Distribute any rounding error to the last base SDN 01 Menteng transaction
+    const baseMentengTxIndices = scaledList
+      .map((t, idx) => (t.institusiId === schoolId && !t.id.includes('tr-proj') ? idx : -1))
       .filter(idx => idx !== -1);
 
-    if (mentengTxIndices.length > 0) {
-      const sumOfScaled = mentengTxIndices.reduce((sum, idx) => sum + scaledList[idx].nominal, 0);
-      const diff = targetRealisasi - sumOfScaled;
+    if (baseMentengTxIndices.length > 0) {
+      const sumOfBaseScaled = baseMentengTxIndices.reduce((sum, idx) => sum + scaledList[idx].nominal, 0);
+      const diff = targetBaseRealisasi - sumOfBaseScaled;
       if (diff !== 0) {
-        const lastIdx = mentengTxIndices[mentengTxIndices.length - 1];
+        const lastIdx = baseMentengTxIndices[baseMentengTxIndices.length - 1];
         scaledList[lastIdx].nominal += diff;
       }
     }
@@ -119,7 +142,7 @@ export default function MutasiRekeningPage() {
         tipe: 'Debet',
         nominal: t.nominal,
       }));
-  }, [transaksiList, activeTahun]);
+  }, [transaksiList, activeTahun, isSupabaseMode]);
 
   // Generate simulated inflows for activeTahun (Credits)
   const creditTransactions = useMemo(() => {

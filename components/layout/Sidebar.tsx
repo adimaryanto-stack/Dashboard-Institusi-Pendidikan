@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store';
 import {
   LayoutDashboard, DollarSign, MapPin, Building2,
   GraduationCap, Users, ChevronDown, ChevronRight,
-  Menu, X, Landmark, School, ShieldCheck, CreditCard, ClipboardList
+  Menu, X, Landmark, School, ShieldCheck, CreditCard, ClipboardList, FolderKanban
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -89,9 +89,14 @@ export default function Sidebar() {
             <span>Mutasi rekening</span>
           </Link>
 
-          <Link href="/dashboard/rencana-anggaran" className={`sidebar-item ${pathname.includes('/rencana-anggaran') ? 'active' : ''}`}>
+          <Link href="/dashboard/rencana-anggaran" className={`sidebar-item ${pathname === '/dashboard/rencana-anggaran' ? 'active' : ''}`}>
             <ClipboardList size={18} />
             <span>Rencana (RAB)</span>
+          </Link>
+
+          <Link href="/dashboard/rencana-anggaran/paket-project" className={`sidebar-item pl-10 ${pathname.includes('/paket-project') ? 'active' : ''}`}>
+            <FolderKanban size={16} />
+            <span>Paket Project</span>
           </Link>
 
           <Link href="/dashboard/pengeluaran" className={`sidebar-item ${pathname.includes('/pengeluaran') ? 'active' : ''}`}>

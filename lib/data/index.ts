@@ -1484,10 +1484,12 @@ function getMonthFromDate(dateStr: string): number {
 
 function getSchoolTransactionsFromStore(institusiId: string, tahun: number): TransaksiGlobal[] {
   let txList: TransaksiGlobal[] = [];
+  let isSupMode = false;
   try {
     const state = useAppStore.getState();
     if (state && state.transaksiList) {
       txList = state.transaksiList;
+      isSupMode = state.isSupabaseMode;
     }
   } catch (e) {}
   if (!txList || txList.length === 0) {
@@ -1499,18 +1501,36 @@ function getSchoolTransactionsFromStore(institusiId: string, tahun: number): Tra
     return [];
   }
 
-  // Scale transactions
-  let scaleRealisasi = 1.0;
+  if (isSupMode) {
+    return schoolTx;
+  }
+
+  // Scale transactions (Mock Mode)
+  let targetRealisasi = 1129655153;
   if (institusiId === 'inst-sd-0') {
     const mentengData = MENTENG_YEAR_DATA[tahun] || MENTENG_YEAR_DATA[2026];
-    scaleRealisasi = mentengData.realisasi / 1129655153;
+    targetRealisasi = mentengData.realisasi;
   } else {
     const targetTahun = tahunAnggaranData.find(t => t.tahun === tahun) || tahunAnggaranData[6];
     const baseTahun = tahunAnggaranData[6];
-    scaleRealisasi = targetTahun.total_anggaran > 0 ? targetTahun.total_anggaran / baseTahun.total_anggaran : 1.0;
+    const scale = targetTahun.total_anggaran > 0 ? targetTahun.total_anggaran / baseTahun.total_anggaran : 1.0;
+    targetRealisasi = Math.round(1129655153 * scale);
   }
 
+  // Separate project transactions
+  const projectTransactions = schoolTx.filter(t => t.id.includes('tr-proj'));
+  const totalProjectNominal = projectTransactions.reduce((sum, t) => sum + t.nominal, 0);
+
+  // Scale only the base non-project transactions
+  const baseRealisasi = 1_129_655_153;
+  const targetBaseRealisasi = Math.max(0, targetRealisasi - totalProjectNominal);
+  const scaleRealisasi = baseRealisasi > 0 ? targetBaseRealisasi / baseRealisasi : 1;
+
   let scaledSchoolTx = schoolTx.map(t => {
+    if (t.id.includes('tr-proj')) {
+      return t;
+    }
+
     let newTanggal = t.tanggal;
     const dateParts = t.tanggal.trim().split(/\s+/);
     if (dateParts.length === 3) {
@@ -1528,17 +1548,21 @@ function getSchoolTransactionsFromStore(institusiId: string, tahun: number): Tra
 
   // Apply rounding error correction if SDN 01 Menteng
   if (institusiId === 'inst-sd-0' && scaledSchoolTx.length > 0) {
-    const mentengData = MENTENG_YEAR_DATA[tahun] || MENTENG_YEAR_DATA[2026];
-    const targetRealisasi = mentengData.realisasi;
-    const sumOfScaled = scaledSchoolTx.reduce((sum, t) => sum + t.nominal, 0);
-    const diff = targetRealisasi - sumOfScaled;
-    if (diff !== 0) {
-      const lastIdx = scaledSchoolTx.length - 1;
-      scaledSchoolTx[lastIdx].nominal += diff;
-      if (scaledSchoolTx[lastIdx].qty > 0) {
-        scaledSchoolTx[lastIdx].hargaSatuan = Math.round(scaledSchoolTx[lastIdx].nominal / scaledSchoolTx[lastIdx].qty);
-      } else {
-        scaledSchoolTx[lastIdx].hargaSatuan = scaledSchoolTx[lastIdx].nominal;
+    const baseMentengTxIndices = scaledSchoolTx
+      .map((t, idx) => (!t.id.includes('tr-proj') ? idx : -1))
+      .filter(idx => idx !== -1);
+
+    if (baseMentengTxIndices.length > 0) {
+      const sumOfBaseScaled = baseMentengTxIndices.reduce((sum, idx) => sum + scaledSchoolTx[idx].nominal, 0);
+      const diff = targetBaseRealisasi - sumOfBaseScaled;
+      if (diff !== 0) {
+        const lastIdx = baseMentengTxIndices[baseMentengTxIndices.length - 1];
+        scaledSchoolTx[lastIdx].nominal += diff;
+        if (scaledSchoolTx[lastIdx].qty > 0) {
+          scaledSchoolTx[lastIdx].hargaSatuan = Math.round(scaledSchoolTx[lastIdx].nominal / scaledSchoolTx[lastIdx].qty);
+        } else {
+          scaledSchoolTx[lastIdx].hargaSatuan = scaledSchoolTx[lastIdx].nominal;
+        }
       }
     }
   }

@@ -290,12 +290,6 @@ export default function ProfilInstitusiDetailPage() {
 
   const { institusi } = profilData;
 
-  // ===== Calculated totals (Dinamis dari state) =====
-  const totalNominalSumber = sumberDana.reduce((s, d) => s + d.nominal, 0);
-  const totalRealisasiSumber = sumberDana.reduce((s, d) => s + d.realisasi, 0);
-  const totalSaldoDiBank = sumberDana.reduce((s, d) => s + d.saldo_di_bank, 0);
-  const saldoSurplusDefisit = totalNominalSumber - totalRealisasiSumber;
-
   // Filter transactions for this specific school
   const schoolTransactions = useMemo(() => {
     return transaksiList.filter(t => t.institusiId === id);
@@ -305,12 +299,48 @@ export default function ProfilInstitusiDetailPage() {
   // - Pengeluaran bulanan bawaan
   // - Ditambah pengeluaran dari transaksiList yang baru ditambahkan secara manual
   const totalPengeluaran = useMemo(() => {
+    if (isSupabaseMode) {
+      return schoolTransactions.reduce((s, t) => s + t.nominal, 0);
+    }
     const defaultPb = pengeluaran.reduce((s, p) => s + p.sub_total, 0);
     const manualTotal = schoolTransactions
-      .filter(t => t.id.startsWith('tr-manual-'))
+      .filter(t => t.id.startsWith('tr-manual-') || t.id.includes('tr-proj'))
       .reduce((s, t) => s + t.nominal, 0);
     return defaultPb + manualTotal;
-  }, [pengeluaran, schoolTransactions]);
+  }, [pengeluaran, schoolTransactions, isSupabaseMode]);
+
+  // ===== Calculated totals (Dinamis dari state) =====
+  const sumberDanaList = useMemo(() => {
+    if (sumberDana.length === 0) return [];
+    
+    if (sumberDana.length === 1) {
+      const s = sumberDana[0];
+      return [{
+        ...s,
+        realisasi: totalPengeluaran,
+        saldo_di_bank: s.nominal - totalPengeluaran
+      }];
+    }
+
+    const otherRealisasi = sumberDana.slice(1).reduce((s, d) => s + d.realisasi, 0);
+    const firstRealisasi = Math.max(0, totalPengeluaran - otherRealisasi);
+
+    return sumberDana.map((s, idx) => {
+      if (idx === 0) {
+        return {
+          ...s,
+          realisasi: firstRealisasi,
+          saldo_di_bank: s.nominal - firstRealisasi
+        };
+      }
+      return s;
+    });
+  }, [sumberDana, totalPengeluaran]);
+
+  const totalNominalSumber = useMemo(() => sumberDanaList.reduce((s, d) => s + d.nominal, 0), [sumberDanaList]);
+  const totalRealisasiSumber = useMemo(() => sumberDanaList.reduce((s, d) => s + d.realisasi, 0), [sumberDanaList]);
+  const totalSaldoDiBank = useMemo(() => sumberDanaList.reduce((s, d) => s + d.saldo_di_bank, 0), [sumberDanaList]);
+  const saldoSurplusDefisit = useMemo(() => totalNominalSumber - totalRealisasiSumber, [totalNominalSumber, totalRealisasiSumber]);
 
   // ===== Dynamic Academic KPIs (Value for Money) =====
   const studentCount = useMemo(() => {
@@ -1019,7 +1049,7 @@ export default function ProfilInstitusiDetailPage() {
                 <span className="text-sm font-bold text-text-primary flex items-center gap-1.5">
                   📁 Dana Masuk & Alokasi Perbankan
                 </span>
-                <span className="text-xs text-text-muted flex-1">({sumberDana.length} sumber dana)</span>
+                <span className="text-xs text-text-muted flex-1">({sumberDanaList.length} sumber dana)</span>
               </div>
               <div className="sheet-container" style={{ maxHeight: 'none' }}>
                 <table className="w-full">
@@ -1035,7 +1065,7 @@ export default function ProfilInstitusiDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sumberDana.map((row, idx) => {
+                    {sumberDanaList.map((row, idx) => {
                       const pct = row.nominal > 0 ? (row.realisasi / row.nominal) * 100 : 0;
                       
                       let barColor = 'bg-indigo-500';

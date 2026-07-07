@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAppStore } from '@/lib/store';
+import { useAppStore, SEED_PROJECTS, SEED_EXPENSES, SEED_VENDORS } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import {
   updateTahunAnggaranData,
@@ -24,7 +24,11 @@ export default function DashboardDbLoader({
     isLoadingDb,
     setIsLoadingDb,
     setTransaksiList,
-    setNotifications
+    setNotifications,
+    setPaketProjectList,
+    setProjectPhotos,
+    setProjectExpenses,
+    setProjectVendors
   } = useAppStore();
 
   const [loaderText, setLoaderText] = useState('Menginisialisasi dasbor...');
@@ -41,6 +45,10 @@ export default function DashboardDbLoader({
         console.log('[Supabase Loader] Credentials missing. Falling back to local Mock Data.');
         setIsSupabaseMode(false);
         setIsLoadingDb(false);
+        setPaketProjectList(SEED_PROJECTS);
+        setProjectPhotos([]);
+        setProjectExpenses(SEED_EXPENSES);
+        setProjectVendors(SEED_VENDORS);
         return;
       }
 
@@ -60,6 +68,10 @@ export default function DashboardDbLoader({
             console.warn('[Supabase Loader] Table "tahun_anggaran" does not exist in Supabase. Run schema DDL first. Falling back to Mock Data.');
             setIsSupabaseMode(false);
             setIsLoadingDb(false);
+            setPaketProjectList(SEED_PROJECTS);
+            setProjectPhotos([]);
+            setProjectExpenses(SEED_EXPENSES);
+            setProjectVendors(SEED_VENDORS);
             return;
           }
           throw testError;
@@ -80,7 +92,11 @@ export default function DashboardDbLoader({
           resPB,
           resItems,
           resUsers,
-          resAnoms
+          resAnoms,
+          resProjects,
+          resPhotos,
+          resExpenses,
+          resVendors
         ] = await Promise.all([
           supabase.from('tahun_anggaran').select('*'),
           supabase.from('provinsi').select('*'),
@@ -92,7 +108,11 @@ export default function DashboardDbLoader({
           supabase.from('pengeluaran_bulanan_institusi').select('*'),
           supabase.from('rincian_pengeluaran_item').select('*'),
           supabase.from('users').select('*'),
-          supabase.from('audit_anomaly').select('*')
+          supabase.from('audit_anomaly').select('*'),
+          supabase.from('projects').select('*'),
+          supabase.from('project_photos').select('*'),
+          supabase.from('project_expenses').select('*'),
+          supabase.from('project_vendors').select('*')
         ]);
 
         // Check for any fetch errors
@@ -107,6 +127,10 @@ export default function DashboardDbLoader({
         if (resItems.error) throw resItems.error;
         if (resUsers.error) throw resUsers.error;
         if (resAnoms.error) throw resAnoms.error;
+        if (resProjects.error) throw resProjects.error;
+        if (resPhotos.error) throw resPhotos.error;
+        if (resExpenses.error) throw resExpenses.error;
+        if (resVendors.error) throw resVendors.error;
 
         setLoaderText('Sinkronisasi data sistem...');
 
@@ -127,6 +151,80 @@ export default function DashboardDbLoader({
         // Cache in Zustand store
         setDbData(loadedDb);
         setIsSupabaseMode(true);
+
+        // Cache project tables in store or seed them if database is empty
+        if (resProjects.data && resProjects.data.length === 0) {
+          console.log('[Supabase Loader] Database projects table is empty. Seeding with initial projects...');
+          
+          try {
+            // Seed projects
+            await supabase.from('projects').insert(
+              SEED_PROJECTS.map(p => ({
+                id: p.id,
+                nama_paket: p.nama_paket,
+                deskripsi: p.deskripsi,
+                tanggal_mulai: p.tanggal_mulai,
+                tanggal_selesai: p.tanggal_selesai,
+                status: p.status,
+                created_by: p.created_by,
+                created_at: p.created_at,
+                updated_at: p.updated_at
+              }))
+            );
+
+            // Seed expenses
+            await supabase.from('project_expenses').insert(
+              SEED_EXPENSES.map(e => ({
+                id: e.id,
+                project_id: e.project_id,
+                tahap: e.tahap,
+                nama_item: e.nama_item,
+                jumlah: e.jumlah,
+                satuan: e.satuan,
+                harga_satuan: e.harga_satuan,
+                subtotal: e.subtotal,
+                jenis_pajak: e.jenis_pajak,
+                persentase_pajak: e.persentase_pajak,
+                nilai_pajak: e.nilai_pajak,
+                total_setelah_pajak: e.total_setelah_pajak,
+                catatan: e.catatan,
+                created_at: e.created_at
+              }))
+            );
+
+            // Seed vendors
+            await supabase.from('project_vendors').insert(
+              SEED_VENDORS.map(v => ({
+                id: v.id,
+                project_id: v.project_id,
+                nama_vendor: v.nama_vendor,
+                kontak_vendor: v.kontak_vendor,
+                nama_pic_internal: v.nama_pic_internal,
+                kontak_pic_internal: v.kontak_pic_internal,
+                nilai_anggaran_kontrak: v.nilai_anggaran_kontrak,
+                jenis_pajak_kontrak: v.jenis_pajak_kontrak,
+                persentase_pajak_kontrak: v.persentase_pajak_kontrak,
+                nilai_pajak_kontrak: v.nilai_pajak_kontrak,
+                nilai_kontrak_setelah_pajak: v.nilai_kontrak_setelah_pajak,
+                created_at: v.created_at
+              }))
+            );
+
+            console.log('[Supabase Loader] Database successfully seeded with initial projects!');
+          } catch (seedErr) {
+            console.error('[Supabase Loader] Seeding failed:', seedErr);
+          }
+
+          setPaketProjectList(SEED_PROJECTS);
+          setProjectPhotos([]);
+          setProjectExpenses(SEED_EXPENSES);
+          setProjectVendors(SEED_VENDORS);
+        } else {
+          setPaketProjectList(resProjects.data || []);
+          setProjectPhotos(resPhotos.data || []);
+          setProjectExpenses(resExpenses.data || []);
+          setProjectVendors(resVendors.data || []);
+        }
 
         // Sync rincian_pengeluaran_item to global transaksiList
         const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
